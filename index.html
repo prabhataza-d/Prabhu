@@ -155,7 +155,7 @@ margin-bottom:12px;
 
 <div id="home">
 <h2>Focus Player</h2>
-<textarea id="links" placeholder="Paste one or more YouTube links (one per line)"></textarea>
+<textarea id="links" placeholder="Paste one or more YouTube links (one per line)" autocomplete="off" spellcheck="false"></textarea>
 <button id="startBtn">Start</button>
 </div>
 
@@ -190,7 +190,7 @@ margin-bottom:12px;
     <button id="confirmAbort" class="close-x" aria-label="Cancel">×</button>
     <p>I definitely completed the target. Karma aur Descipline ka samman hua hai.</p>
     <div class="hint">Type this exact sentence to continue.</div>
-    <input id="confirmInput" type="text" placeholder="Type the sentence exactly" aria-label="confirmation text">
+    <input id="confirmInput" type="text" placeholder="Type the sentence exactly" aria-label="confirmation text" autocomplete="off" spellcheck="false">
     <button id="confirmCheck">Check</button>
   </div>
 </div>
@@ -269,7 +269,14 @@ function doExitFullscreenAction(){
 
 confirmCheck.addEventListener("click", runConfirm)
 confirmAbort.addEventListener("click", closeConfirm)
-confirmInput.addEventListener("keydown", e=>{ if(e.key === "Enter") runConfirm() })
+confirmInput.addEventListener("keydown", e=>{ 
+  if(e.ctrlKey && (e.key.toLowerCase() === "v" || e.key.toLowerCase() === "x" || e.key.toLowerCase() === "c")){
+    e.preventDefault()
+    return
+  }
+  if(e.key === "Enter") runConfirm()
+})
+confirmInput.addEventListener("paste", e=>{ e.preventDefault() })
 
 
 /* ------------------------
@@ -435,44 +442,36 @@ KEYBOARD (YOUTUBE STYLE)
 ------------------------ */
 
 window.addEventListener("keydown",e=>{
+  if(!confirmModal.classList.contains("hidden")){
+    // disable all player shortcuts while confirm prompt is active
+    if(e.key === "F11") e.preventDefault()
+    return
+  }
 
-if(e.key==="F11"){
-  e.preventDefault()
-  toggleFullscreen()
-  return
-}
+  if(e.key==="F11"){
+    e.preventDefault()
+    toggleFullscreen()
+    return
+  }
 
-if(!player) return
+  if(!player) return
 
-let k=e.key.toLowerCase()
+  let k=e.key.toLowerCase()
 
-if(k==="k"||k===" "){
-
-let s=player.getPlayerState()
-
-if(s===1) player.pauseVideo()
-else player.playVideo()
-
-}
-
-else if(k==="j") player.seekTo(player.getCurrentTime()-10)
-
-else if(k==="l") player.seekTo(player.getCurrentTime()+10)
-
-else if(k==="arrowleft") player.seekTo(player.getCurrentTime()-5)
-
-else if(k==="arrowright") player.seekTo(player.getCurrentTime()+5)
-
-else if(k==="f") toggleFullscreen()
-
-else if(/[0-9]/.test(k)){
-
-let percent=parseInt(k)/10
-
-player.seekTo(duration*percent)
-
-}
-
+  if(k==="k"||k===" "){
+    let s=player.getPlayerState()
+    if(s===1) player.pauseVideo()
+    else player.playVideo()
+  }
+  else if(k==="j") player.seekTo(player.getCurrentTime()-10)
+  else if(k==="l") player.seekTo(player.getCurrentTime()+10)
+  else if(k==="arrowleft") player.seekTo(player.getCurrentTime()-5)
+  else if(k==="arrowright") player.seekTo(player.getCurrentTime()+5)
+  else if(k==="f") toggleFullscreen()
+  else if(/[0-9]/.test(k)){
+    let percent=parseInt(k)/10
+    player.seekTo(duration*percent)
+  }
 })
 
 
