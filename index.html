@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Focus Player — YouTube-style</title>
+
+<style>
+
+html,body{
+margin:0;
+height:100%;
+background:black;
+color:white;
+font-family:Arial,Helvetica,sans-serif;
+overflow:hidden;
+}
+
+/* HOME */
+#home{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+gap:15px;
+background:#0b0b0b;
+}
+
+#links{
+width:600px;
+max-width:90vw;
+height:120px;
+font-size:16px;
+padding:10px;
+background:#111;
+color:white;
+border:none;
+outline:none;
+}
+
+button{
+padding:10px 16px;
+background:#222;
+border:none;
+color:white;
+cursor:pointer;
+}
+
+/* PLAYER */
+#playerPage{
+position:fixed;
+inset:0;
+display:none;
+background:black;
+overflow:hidden;
+}
+
+#player{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+}
+#player iframe{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+border:none;
+}
+
+/* overlay used for detecting mouse movement */
+#overlay{
+position:absolute;
+inset:0;
+z-index:3;
+}
+
+/* controls */
+#controls{
+position:absolute;
+bottom:0;
+width:100%;
+padding:10px;
+background:linear-gradient(transparent, rgba(0,0,0,.8));
+
+display:flex;
+align-items:center;
+gap:10px;
+
+transition:opacity .2s ease;
+z-index:5;
+}
+
+#controls.hidden{
+opacity:0;
+pointer-events:none;
+}
+
+#timeline{
+flex:1;
+}
+
+#timeLabel{
+font-family:monospace;
+}
+
+.hideCursor{
+cursor:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="home">
+<h2>Focus Player</h2>
+<textarea id="links" placeholder="Paste one or more YouTube links (one per line)"></textarea>
+<button id="startBtn">Start</button>
+</div>
+
+<div id="playerPage">
+<div id="player"></div>
+<div id="overlay"></div>
+
+<div id="controls">
+<button id="playPause">Play</button>
+<button id="skipBack">-10s</button>
+<button id="skipForward">+10s</button>
+
+<span id="timeLabel">00:00:00 / 00:00:00</span>
+
+<input type="range" id="timeline" min="0" max="100" value="0">
+
+<select id="speed">
+<option>0.5</option>
+<option>0.75</option>
+<option selected>1</option>
+<option>1.25</option>
+<option>1.5</option>
+<option>2</option>
+</select>
+
+<button id="closeBtn">Close</button>
+</div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+
+/* ------------------------
+GLOBAL VARIABLES
+------------------------ */
+
+let player
+let playlist=[]
+let index=0
+let duration=0
+
+let saveInterval
+let hideTimer
+
+const STORAGE_PLAYLIST="focus_playlist"
+const STORAGE_INDEX="focus_index"
+const STORAGE_TIME="focus_time"
+
+
+/* ------------------------
+UTILITIES
+------------------------ */
+
+function isValidVideoId(id){
+  return typeof id === 'string' && /^[A-Za-z0-9_-]{6,}$/.test(id)
+}
+
+function extractID(url){
+  if(!url) return null
+  const reg = /(?:v=|v\/|embed\/|youtu\.be\/)([A-Za-z0-9_-]{6,})/
+  const m = url.match(reg)
+  if(m && isValidVideoId(m[1])) return m[1]
+  if (isValidVideoId(url)) return url
+  return null
+}
+
+function formatTime(s){
+
+s=Math.floor(s)
+
+let h=Math.floor(s/3600)
+let m=Math.floor((s%3600)/60)
+let sec=s%60
+
+return String(h).padStart(2,"0")+":"+
+String(m).padStart(2,"0")+":"+
+String(sec).padStart(2,"0")
+
+}
+
+
+/* ------------------------
+START PLAYER
+------------------------ */
+
+function startPlayer(id,startTime=0){
+
+player=new YT.Player("player",{
+  videoId:id,
+  playerVars:{controls:0,rel:0,modestbranding:1,playsinline:1},
+  events:{
+    onReady:()=>{
+      player.seekTo(startTime)
+      player.playVideo()
+      duration=player.getDuration()
+      startSaving()
+    },
+    onError:(e)=>{
+      console.warn('YT player error',e)
+      alert('Video playback error. Please check the link and try another video.')
+    }
+  }
+})
+
+}
+
+
+/* ------------------------
+SAVE TIME
+------------------------ */
+
+function startSaving(){
+
+saveInterval=setInterval(()=>{
+
+try{
+let t=player.getCurrentTime()
+
+let map=JSON.parse(localStorage.getItem(STORAGE_TIME)||"{}")
+
+map[playlist[index]]=t
+
+localStorage.setItem(STORAGE_TIME,JSON.stringify(map))
+
+updateUI()
+
+}catch{}
+
+},500)
+
+}
+
+
+/* ------------------------
+UI UPDATE
+------------------------ */
+
+function updateUI(){
+
+let t=player.getCurrentTime()
+
+duration=player.getDuration()
+
+let percent=(t/duration)*100
+
+document.getElementById("timeline").value=percent
+
+
+document.getElementById("timeLabel").innerText=
+formatTime(t)+" / "+formatTime(duration)
+
+}
+
+
+/* ------------------------
+TIMELINE
+------------------------ */
+
+document.getElementById("timeline").addEventListener("input",e=>{
+
+let t=(e.target.value/100)*duration
+
+player.seekTo(t)
+
+})
+
+
+/* ------------------------
+BUTTONS
+------------------------ */
+
+document.getElementById("playPause").onclick=()=>{
+
+let s=player.getPlayerState()
+
+if(s===1){player.pauseVideo()}
+else{player.playVideo()}
+
+}
+
+
+document.getElementById("skipForward").onclick=()=>{
+
+player.seekTo(player.getCurrentTime()+10)
+
+}
+
+
+document.getElementById("skipBack").onclick=()=>{
+
+player.seekTo(player.getCurrentTime()-10)
+
+}
+
+
+document.getElementById("speed").onchange=e=>{
+
+player.setPlaybackRate(parseFloat(e.target.value))
+
+}
+
+
+document.getElementById("closeBtn").onclick=()=>{
+
+clearInterval(saveInterval)
+
+localStorage.removeItem(STORAGE_PLAYLIST)
+localStorage.removeItem(STORAGE_INDEX)
+localStorage.removeItem(STORAGE_TIME)
+
+location.reload()
+
+}
+
+
+/* ------------------------
+KEYBOARD (YOUTUBE STYLE)
+------------------------ */
+
+window.addEventListener("keydown",e=>{
+
+if(e.key==="F11"){
+  e.preventDefault()
+  toggleFullscreen()
+  return
+}
+
+if(!player) return
+
+let k=e.key.toLowerCase()
+
+if(k==="k"||k===" "){
+
+let s=player.getPlayerState()
+
+if(s===1) player.pauseVideo()
+else player.playVideo()
+
+}
+
+else if(k==="j") player.seekTo(player.getCurrentTime()-10)
+
+else if(k==="l") player.seekTo(player.getCurrentTime()+10)
+
+else if(k==="arrowleft") player.seekTo(player.getCurrentTime()-5)
+
+else if(k==="arrowright") player.seekTo(player.getCurrentTime()+5)
+
+else if(k==="f") toggleFullscreen()
+
+else if(/[0-9]/.test(k)){
+
+let percent=parseInt(k)/10
+
+player.seekTo(duration*percent)
+
+}
+
+})
+
+
+/* ------------------------
+FULLSCREEN
+------------------------ */
+
+function toggleFullscreen(){
+
+if(!document.fullscreenElement)
+
+document.documentElement.requestFullscreen()
+
+else
+
+document.exitFullscreen()
+
+}
+
+
+/* ------------------------
+MOUSE HIDE (YOUTUBE STYLE)
+------------------------ */
+
+function showUI(){
+
+clearTimeout(hideTimer)
+
+document.getElementById("controls").classList.remove("hidden")
+
+document.body.classList.remove("hideCursor")
+
+hideTimer=setTimeout(()=>{
+
+if(player.getPlayerState()===1){
+
+document.getElementById("controls").classList.add("hidden")
+
+document.body.classList.add("hideCursor")
+
+}
+
+},2000)
+
+}
+
+
+document.getElementById("overlay").addEventListener("mousemove",showUI)
+
+
+/* ------------------------
+HOME START
+------------------------ */
+
+function startFromHome(){
+  let text=document.getElementById("links").value
+  let ids=text.split("\n").map(v=>extractID(v.trim())).filter(v=>v)
+  if(!ids.length){
+    alert('Please paste at least one valid YouTube ID or link.')
+    return
+  }
+  playlist=ids
+  index=0
+  localStorage.setItem(STORAGE_PLAYLIST,JSON.stringify(playlist))
+  localStorage.setItem(STORAGE_INDEX,index)
+  loadVideo()
+}
+
+document.getElementById("startBtn").onclick=startFromHome
+
+
+/* ------------------------
+LOAD VIDEO
+------------------------ */
+
+function loadVideo(){
+
+home.style.display="none"
+playerPage.style.display="block"
+
+let times=JSON.parse(localStorage.getItem(STORAGE_TIME)||"{}")
+
+let t=times[playlist[index]]||0
+
+startPlayer(playlist[index],t)
+
+}
+
+
+/* ------------------------
+AUTO RESUME
+------------------------ */
+
+window.onload=()=>{
+
+let saved=localStorage.getItem(STORAGE_PLAYLIST)
+
+if(saved){
+
+playlist=JSON.parse(saved)
+index=parseInt(localStorage.getItem(STORAGE_INDEX)||0)
+
+loadVideo()
+
+}
+
+}
+
+
+</script>
+
+</body>
+</html>
