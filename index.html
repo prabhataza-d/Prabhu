@@ -110,6 +110,44 @@ font-family:monospace;
 cursor:none;
 }
 
+/* confirm prompt overlay */
+#confirmModal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.7);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:999;
+}
+#confirmModal.hidden{display:none;}
+#confirmBox{
+background:#111;
+padding:18px;
+border-radius:10px;
+max-width:450px;
+width:min(92vw, 450px);
+color:#fff;
+position:relative;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+#confirmBox p{margin:0 0 12px;line-height:1.4;}
+#confirmBox input{
+width:100%;
+box-sizing:border-box;
+padding:10px;
+border:1px solid #444;
+border-radius:8px;
+background:#0e0e0e;
+color:#fff;
+outline:none;
+margin-bottom:12px;
+}
+#confirmBox input.invalid{border-color:#f66; animation:flash 0.25s ease 0s 2;}
+@keyframes flash{0%{background:#0e0e0e}50%{background:#3f1010}100%{background:#0e0e0e}}
+#confirmBox button{background:#1db954;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer;}
+#confirmBox .close-x{position:absolute;top:8px;right:8px;background:transparent;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px;}
+#confirmBox .hint{font-size:12px;color:#bbb;margin-bottom:8px;}
 </style>
 </head>
 
@@ -147,6 +185,16 @@ cursor:none;
 </div>
 </div>
 
+<div id="confirmModal" class="hidden">
+  <div id="confirmBox">
+    <button id="confirmAbort" class="close-x" aria-label="Cancel">×</button>
+    <p>I definitely completed the target. Karma aur Descipline ka samman hua hai.</p>
+    <div class="hint">Type this exact sentence to continue.</div>
+    <input id="confirmInput" type="text" placeholder="Type the sentence exactly" aria-label="confirmation text">
+    <button id="confirmCheck">Check</button>
+  </div>
+</div>
+
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
@@ -162,10 +210,66 @@ let duration=0
 
 let saveInterval
 let hideTimer
+let confirmPendingAction = null
 
 const STORAGE_PLAYLIST="focus_playlist"
 const STORAGE_INDEX="focus_index"
 const STORAGE_TIME="focus_time"
+const CONFIRM_TEXT = "I definitely completed the target. Karma aur Descipline ka samman hua hai."
+const CONFIRM_TEXT_ALT = "I definitely completed the target. Karma aur Discipline ka samman hua hai."
+
+const confirmModal = document.getElementById("confirmModal")
+const confirmInput = document.getElementById("confirmInput")
+const confirmCheck = document.getElementById("confirmCheck")
+const confirmAbort = document.getElementById("confirmAbort")
+
+function openConfirm(action){
+  confirmPendingAction = action
+  confirmInput.value = ""
+  confirmInput.classList.remove("invalid")
+  confirmModal.classList.remove("hidden")
+  confirmInput.focus()
+}
+
+function closeConfirm(){
+  confirmPendingAction = null
+  confirmModal.classList.add("hidden")
+}
+
+function runConfirm(){
+  const attempt = confirmInput.value.trim()
+  if(attempt === CONFIRM_TEXT || attempt === CONFIRM_TEXT_ALT){
+    const action = confirmPendingAction
+    closeConfirm()
+    if(action === "close"){
+      doCloseAction()
+    } else if(action === "exitFullscreen"){
+      doExitFullscreenAction()
+    }
+    return
+  }
+  confirmInput.classList.add("invalid")
+  confirmInput.value = ""
+  setTimeout(()=>confirmInput.classList.remove("invalid"),220)
+}
+
+function doCloseAction(){
+  clearInterval(saveInterval)
+  localStorage.removeItem(STORAGE_PLAYLIST)
+  localStorage.removeItem(STORAGE_INDEX)
+  localStorage.removeItem(STORAGE_TIME)
+  location.reload()
+}
+
+function doExitFullscreenAction(){
+  if(document.fullscreenElement){
+    document.exitFullscreen()
+  }
+}
+
+confirmCheck.addEventListener("click", runConfirm)
+confirmAbort.addEventListener("click", closeConfirm)
+confirmInput.addEventListener("keydown", e=>{ if(e.key === "Enter") runConfirm() })
 
 
 /* ------------------------
@@ -322,15 +426,7 @@ player.setPlaybackRate(parseFloat(e.target.value))
 
 
 document.getElementById("closeBtn").onclick=()=>{
-
-clearInterval(saveInterval)
-
-localStorage.removeItem(STORAGE_PLAYLIST)
-localStorage.removeItem(STORAGE_INDEX)
-localStorage.removeItem(STORAGE_TIME)
-
-location.reload()
-
+  openConfirm("close")
 }
 
 
@@ -385,15 +481,11 @@ FULLSCREEN
 ------------------------ */
 
 function toggleFullscreen(){
-
-if(!document.fullscreenElement)
-
-document.documentElement.requestFullscreen()
-
-else
-
-document.exitFullscreen()
-
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen()
+  } else {
+    openConfirm("exitFullscreen")
+  }
 }
 
 
