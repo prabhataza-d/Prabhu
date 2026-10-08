@@ -615,6 +615,67 @@
       background: #e5e5e5;
     }
 
+    .ad-assist {
+      position: absolute;
+      right: 18px;
+      bottom: 108px;
+      z-index: 7;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: min(400px, calc(100vw - 32px));
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(17, 19, 27, 0.8);
+      backdrop-filter: blur(16px) saturate(110%);
+      -webkit-backdrop-filter: blur(16px) saturate(110%);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .ad-assist__message {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.4;
+    }
+
+    .ad-assist__actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .ad-assist__button {
+      padding: 7px 10px;
+      border: 1px solid rgba(139, 124, 255, 0.26);
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(139, 124, 255, 0.18), rgba(139, 124, 255, 0.08));
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .ad-assist__button:hover,
+    .ad-assist__button:active {
+      background: linear-gradient(180deg, rgba(139, 124, 255, 0.26), rgba(139, 124, 255, 0.12));
+    }
+
+    .ad-assist__button.secondary {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .ad-assist__button.secondary:hover,
+    .ad-assist__button.secondary:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
     #confirmModal {
       position: fixed;
       z-index: 100;
@@ -760,6 +821,11 @@
       .primary-btn {
         width: 100%;
       }
+
+      .ad-assist {
+        right: 10px;
+        bottom: 96px;
+      }
     }
   </style>
 </head>
@@ -789,6 +855,15 @@
       <div id="playerMessage" hidden role="status">
         <span id="playerMessageText"></span>
         <button id="errorNextBtn" class="notice-action" type="button" hidden>Skip to next</button>
+      </div>
+
+      <div id="adAssist" class="ad-assist" hidden aria-live="polite">
+        <div id="adAssistMessage" class="ad-assist__message">Ad in progress</div>
+        <div class="ad-assist__actions">
+          <button id="adSkipBtn" class="ad-assist__button" type="button">Skip ad</button>
+          <button id="adReloadBtn" class="ad-assist__button secondary" type="button">Reload</button>
+          <button id="adIgnoreBtn" class="ad-assist__button secondary" type="button">No, I'm good</button>
+        </div>
       </div>
 
       <div id="controls" aria-label="Video controls">
@@ -858,7 +933,6 @@
   </section>
 
   <script>
-    // The API can call this before the app script below is evaluated.
     window.focusPlayerApiReady = false;
     window.focusPlayerApiFailed = false;
     window.onYouTubeIframeAPIReady = function () {
@@ -925,6 +999,11 @@
       const modalCheck = document.getElementById("modalCheck");
       const modalCancel = document.getElementById("modalCancel");
       const modalAbort = document.getElementById("modalAbort");
+      const adAssist = document.getElementById("adAssist");
+      const adAssistMessage = document.getElementById("adAssistMessage");
+      const adSkipBtn = document.getElementById("adSkipBtn");
+      const adReloadBtn = document.getElementById("adReloadBtn");
+      const adIgnoreBtn = document.getElementById("adIgnoreBtn");
 
       const PLAYBACK_RATE_MIN = 0.25;
       const PLAYBACK_RATE_MAX = 4;
@@ -944,6 +1023,11 @@
       let allowFullscreenExit = false;
       let fullscreenExitPrompted = false;
       let apiErrorShown = false;
+      let adMonitorInterval = null;
+      let adStartTimestamp = 0;
+      let adPromptVisible = false;
+      let adPromptIssued = false;
+      let adAttempted = false;
 
       function storageGet(key) {
         try {
@@ -957,7 +1041,6 @@
         try {
           window.localStorage.setItem(key, value);
         } catch (error) {
-          // Playback remains usable even if storage is unavailable.
         }
       }
 
@@ -965,7 +1048,6 @@
         try {
           window.localStorage.removeItem(key);
         } catch (error) {
-          // Nothing else is needed if storage is unavailable.
         }
       }
 
@@ -1004,6 +1086,108 @@
         }
 
         return validVideoId(id) ? id : null;
+      }
+
+      function hideAdAssist() {
+        adAssist.hidden = true;
+        adPromptVisible = false;
+      }
+
+      function showAdAssist(message, showOptions) {
+        adAssistMessage.textContent = message || "Ad in progress";
+        adAssist.hidden = false;
+        adPromptVisible = true;
+
+        if (showOptions) {
+          adSkipBtn.hidden = false;
+          adReloadBtn.hidden = false;
+          adIgnoreBtn.hidden = false;
+        } else {
+          adSkipBtn.hidden = false;
+          adReloadBtn.hidden = true;
+          adIgnoreBtn.hidden = true;
+        }
+      }
+
+      function resetAdAssist() {
+        adStartTimestamp = 0;
+        adPromptVisible = false;
+        adPromptIssued = false;
+        adAttempted = false;
+        hideAdAssist();
+      }
+
+      function attemptAdSkip() {
+        if (!player) return;
+
+        try {
+          const currentTime = Number(player.getCurrentTime() || 0);
+          const duration = Number(player.getDuration() || 0);
+          const targetTime = duration > 0 ? Math.max(currentTime + 15, duration - 1) : currentTime + 15;
+          player.seekTo(targetTime, true);
+          player.playVideo();
+          adAttempted = true;
+          hideAdAssist();
+        } catch (error) {
+          hideAdAssist();
+        }
+      }
+
+      function evaluateAdState() {
+        if (!player) return;
+
+        const state = player.getPlayerState();
+        const currentTime = Number(player.getCurrentTime() || 0);
+        const duration = Number(player.getDuration() || 0);
+
+        const likelyAd = duration > 0 && duration <= 90 && currentTime >= 0 && currentTime < duration && state === window.YT.PlayerState.PLAYING;
+
+        if (!likelyAd) {
+          if (adPromptVisible || adPromptIssued) {
+            resetAdAssist();
+          }
+          return;
+        }
+
+        if (!adStartTimestamp) {
+          adStartTimestamp = Date.now();
+        }
+
+        const elapsed = Date.now() - adStartTimestamp;
+
+        if (!adPromptVisible && !adPromptIssued) {
+          showAdAssist("Ad in progress", false);
+          adPromptIssued = true;
+        }
+
+        if (elapsed >= 30000 && !adPromptVisible) {
+          showAdAssist("Ad still running. You can reload or continue.", true);
+          adPromptVisible = true;
+        }
+
+        if (elapsed >= 30000 && !adAttempted) {
+          adSkipBtn.hidden = false;
+          adReloadBtn.hidden = false;
+          adIgnoreBtn.hidden = false;
+        }
+      }
+
+      function startAdMonitor() {
+        if (adMonitorInterval) {
+          clearInterval(adMonitorInterval);
+        }
+
+        adMonitorInterval = setInterval(() => {
+          evaluateAdState();
+        }, 1000);
+      }
+
+      function stopAdMonitor() {
+        if (adMonitorInterval) {
+          clearInterval(adMonitorInterval);
+          adMonitorInterval = null;
+        }
+        resetAdAssist();
       }
 
       function focusPlayerBoot() {
@@ -1113,7 +1297,6 @@
             player.setPlaybackRate(playbackRate);
           }
           storageSet(SPEED_KEY, playbackRate.toString());
-          seekBar.style.setProperty("--slider-progress", (playbackRateSlider.value - 0.25) / (4 - 0.25) * 100 + "%");
         });
 
         modalCheck.addEventListener("click", () => {
@@ -1169,6 +1352,24 @@
             event.preventDefault();
             event.returnValue = "";
           }
+        });
+
+        adSkipBtn.addEventListener("click", () => {
+          attemptAdSkip();
+        });
+
+        adReloadBtn.addEventListener("click", () => {
+          if (!currentVideoId) {
+            return;
+          }
+          if (player) {
+            player.loadVideoById(currentVideoId);
+          }
+          hideAdAssist();
+        });
+
+        adIgnoreBtn.addEventListener("click", () => {
+          hideAdAssist();
         });
       }
 
@@ -1239,7 +1440,6 @@
           playbackRateSlider.value = playbackRate.toString();
           speedValue.textContent = playbackRate.toFixed(2) + "x";
           player.setPlaybackRate(playbackRate);
-          seekBar.style.setProperty("--slider-progress", (playbackRate - 0.25) / (4 - 0.25) * 100 + "%");
         }
 
         const savedProgress = storageGet(PROGRESS_KEY + "." + currentVideoId);
@@ -1252,6 +1452,7 @@
 
         player.playVideo();
         updateProgress();
+        startAdMonitor();
       }
 
       function onPlayerStateChange(event) {
@@ -1277,6 +1478,10 @@
             clearPlayer();
           }
         }
+
+        if (state !== window.YT.PlayerState.PLAYING) {
+          resetAdAssist();
+        }
       }
 
       function onPlayerError(event) {
@@ -1299,6 +1504,7 @@
           default:
             message = "An error occurred while loading the video.";
         }
+
         playerMessageText.textContent = message;
         playerMessage.hidden = false;
         errorNextBtn.hidden = playlist.length > 1 && currentIndex < playlist.length - 1 ? false : true;
@@ -1333,6 +1539,7 @@
       }
 
       function clearPlayer() {
+        stopAdMonitor();
         if (progressIntervalId) clearInterval(progressIntervalId);
         if (player) {
           player.stopVideo();
