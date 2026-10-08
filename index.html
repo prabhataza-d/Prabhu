@@ -417,6 +417,7 @@
       -webkit-appearance: none;
       width: 12px;
       height: 12px;
+      margin-top: -4px;
       border: 0;
       border-radius: 50%;
       background: var(--player-thumb);
@@ -427,6 +428,7 @@
     #playbackRateSlider::-moz-range-thumb {
       width: 12px;
       height: 12px;
+      margin-top: -4px;
       border: 0;
       border-radius: 50%;
       background: var(--player-thumb);
@@ -819,7 +821,7 @@
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3zm11-5h5v5h-2V6h-3zM4 15h2v3h3v2H4zm14 0h2v5h-5v-2h3z"></path></svg>
             </button>
             <button id="settingsBtn" class="settings-btn" type="button" aria-label="Settings" title="Settings">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94a7.52 7.52 0 0 0 .05-.94.7.7 0 0 0-.05-.25l1.94-1.51a.8.8 0 0 0 .19-.98l-1.82-3.15a.8.8 0 0 0-.95-.29l-2.28.91a6.8 6.8 0 0 0-1.63-.94L13.96 3.4a.8.8 0 0 0-.8-.6h-3.63a.8.8 0 0 0-.8.6l-.3 2.38a6.86 6.86 0 0 0-1.62.94l-2.29-.91a.8.8 0 0 0-.95.29L1.67 9.95a.8.8 0 0 0 .19.98l1.94 1.51a.7.7 0 0 0 .05.25.7.7 0 0 0-.05.25l-1.94 1.51a.8.8 0 0 0-.19.98l1.82 3.15a.8.8 0 0 0 .95.29l2.29-.91c.5.39 1.04.7 1.62.94l.3 2.38a.8.8 0 0 0 .8.6h3.63a.8.8 0 0 0 .8-.6l.3-2.38c.58-.24 1.12-.55 1.63-.94l2.28.91a.8.8 0 0 0 .95-.29l1.82-3.15a.8.8 0 0 0-.19-.98l-1.94-1.51ZM12 15.75A3.75 3.75 0 1 1 12 8.25a3.75 3.75 0 0 1 0 7.5Z"></path></svg>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94a7.52 7.52 0 0 0 .05-.94.7.7 0 0 0-.05-.25l1.94-1.51a.8.8 0 0 0 .19-.98l-1.82-3.15a.8.8 0 0 0-.95-.29l-2.28.88c-.3-.2-.63-.38-1-.52l-.34-2.42a.8.8 0 0 0-.78-.68h-3.63a.8.8 0 0 0-.78.68l-.34 2.42c-.37.14-.7.32-1 .52l-2.28-.88a.8.8 0 0 0-.95.29l-1.82 3.15a.8.8 0 0 0 .19.98l1.94 1.51c-.03.08-.04.16-.05.25s-.02.62-.05.94c.03.08.04.16.05.25l-1.94 1.51a.8.8 0 0 0-.19.98l1.82 3.15a.8.8 0 0 0 .95.29l2.28-.88c.3.2.63.38 1 .52l.34 2.42a.8.8 0 0 0 .78.68h3.63a.8.8 0 0 0 .78-.68l.34-2.42c.37-.14.7-.32 1-.52l2.28.88a.8.8 0 0 0 .95-.29l1.82-3.15a.8.8 0 0 0-.19-.98l-1.94-1.51c.03-.08.04-.16.05-.25zm-9.14 3.06a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"></path></svg>
             </button>
           </div>
         </div>
@@ -998,889 +1000,370 @@
         } else if (host === "youtube.com" || host === "m.youtube.com") {
           if (url.pathname === "/watch") {
             id = url.searchParams.get("v");
-          } else if (["embed", "shorts"].includes(parts[0])) {
-            id = parts[1] || null;
           }
         }
 
         return validVideoId(id) ? id : null;
       }
 
-      function parseLinks(value) {
-        return String(value || "")
-          .split(/\r?\n/)
-          .map(extractVideoId)
-          .filter(Boolean);
-      }
-
-      function getStoredPlaylist() {
-        try {
-          const saved = JSON.parse(storageGet(PLAYLIST_KEY) || "[]");
-          if (!Array.isArray(saved)) {
-            return [];
-          }
-          return saved.filter(validVideoId);
-        } catch (error) {
-          return [];
-        }
-      }
-
-      function getProgressMap() {
-        try {
-          const saved = JSON.parse(storageGet(PROGRESS_KEY) || "{}");
-          return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
-        } catch (error) {
-          return {};
-        }
-      }
-
-      function getResumeTime(videoId) {
-        const value = Number(getProgressMap()[videoId]);
-        return Number.isFinite(value) && value >= 0 ? value : 0;
-      }
-
-      function normalizePlaybackRate(value) {
-        if (!Number.isFinite(Number(value))) {
-          return 1;
-        }
-        const clamped = Math.min(PLAYBACK_RATE_MAX, Math.max(PLAYBACK_RATE_MIN, Number(value)));
-        return Number((Math.round(clamped / PLAYBACK_RATE_STEP) * PLAYBACK_RATE_STEP).toFixed(2));
-      }
-
-      function formatPlaybackRate(value) {
-        const normalized = normalizePlaybackRate(value);
-        const integerValue = Number(normalized.toFixed(2));
-        const text = Number.isInteger(integerValue)
-          ? String(integerValue)
-          : String(integerValue).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
-        return `${text}x`;
-      }
-
-      function getSavedSpeed() {
-        const saved = storageGet(SPEED_KEY) || "1";
-        return normalizePlaybackRate(Number(saved) || 1);
-      }
-
-      function persistIndex() {
-        // Keep this string conversion explicit: localStorage stores strings.
-        storageSet(INDEX_KEY, String(currentIndex));
-      }
-
-      function formatTime(seconds) {
-        const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
-        const hours = Math.floor(safeSeconds / 3600);
-        const minutes = Math.floor((safeSeconds % 3600) / 60);
-        const remainder = safeSeconds % 60;
-        return [hours, minutes, remainder].map((part) => String(part).padStart(2, "0")).join(":");
-      }
-
-      function showApiError() {
-        if (apiErrorShown) {
+      function focusPlayerBoot() {
+        if (!window.YT) {
+          setTimeout(focusPlayerBoot, 100);
           return;
         }
-        apiErrorShown = true;
-        apiError.textContent = "The YouTube player failed to load. Check your connection and reload the page.";
-        apiError.hidden = false;
+
+        displayHome();
+        loadPlaylist();
+
+        startBtn.addEventListener("click", () => {
+          const rawLinks = links.value.trim();
+          if (!rawLinks) {
+            apiError.textContent = "Please paste at least one link.";
+            apiError.hidden = false;
+            return;
+          }
+
+          const videoIds = [];
+          const lines = rawLinks.split(/\n/).filter((x) => x.trim());
+          lines.forEach((line) => {
+            const id = extractVideoId(line);
+            if (id) {
+              videoIds.push(id);
+            }
+          });
+
+          if (!videoIds.length) {
+            apiError.textContent = "No valid YouTube links found. Check your input.";
+            apiError.hidden = false;
+            return;
+          }
+
+          apiError.hidden = true;
+          startPlaylist(videoIds);
+        });
+
+        overlay.addEventListener("click", () => {
+          if (!player) return;
+          const state = player.getPlayerState();
+          if (state === window.YT.PlayerState.PLAYING) {
+            player.pauseVideo();
+          } else if (state === window.YT.PlayerState.PAUSED || state === window.YT.PlayerState.ENDED) {
+            player.playVideo();
+          }
+        });
+
+        playPauseBtn.addEventListener("click", () => {
+          if (!player) return;
+          const state = player.getPlayerState();
+          if (state === window.YT.PlayerState.PLAYING) {
+            player.pauseVideo();
+          } else {
+            player.playVideo();
+          }
+        });
+
+        skipBackBtn.addEventListener("click", () => {
+          if (!player) return;
+          player.seekTo(Math.max(0, player.getCurrentTime() - 10));
+        });
+
+        skipForwardBtn.addEventListener("click", () => {
+          if (!player) return;
+          player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 10));
+        });
+
+        seekBar.addEventListener("input", () => {
+          if (!player) return;
+          const duration = player.getDuration();
+          if (duration > 0) {
+            player.seekTo((parseFloat(seekBar.value) / 100) * duration);
+          }
+        });
+
+        fullscreenBtn.addEventListener("click", () => {
+          if (playerPage.requestFullscreen) {
+            playerPage.requestFullscreen().catch(() => {});
+          }
+        });
+
+        settingsBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (isSettingsOpen) {
+            settingsPanel.hidden = true;
+            isSettingsOpen = false;
+          } else {
+            settingsPanel.hidden = false;
+            isSettingsOpen = true;
+          }
+        });
+
+        closeBtn.addEventListener("click", () => {
+          if (player && player.getPlayerState() === window.YT.PlayerState.PLAYING) {
+            confirmModal.hidden = false;
+            fullscreenExitPrompted = true;
+          } else {
+            clearPlayer();
+          }
+        });
+
+        playbackRateSlider.addEventListener("input", () => {
+          playbackRate = parseFloat(playbackRateSlider.value);
+          speedValue.textContent = playbackRate.toFixed(2) + "x";
+          if (player) {
+            player.setPlaybackRate(playbackRate);
+          }
+          storageSet(SPEED_KEY, playbackRate.toString());
+          seekBar.style.setProperty("--slider-progress", (playbackRateSlider.value - 0.25) / (4 - 0.25) * 100 + "%");
+        });
+
+        modalCheck.addEventListener("click", () => {
+          const input = confirmInput.value.trim();
+          if (ACCEPTED_TEXTS.includes(input)) {
+            confirmModal.hidden = true;
+            confirmInput.classList.remove("invalid");
+            confirmInput.value = "";
+            clearPlayer();
+          } else {
+            confirmInput.classList.add("invalid");
+            setTimeout(() => confirmInput.classList.remove("invalid"), 350);
+          }
+        });
+
+        modalCancel.addEventListener("click", () => {
+          confirmModal.hidden = true;
+          confirmInput.value = "";
+          confirmInput.classList.remove("invalid");
+        });
+
+        modalAbort.addEventListener("click", () => {
+          confirmModal.hidden = true;
+          confirmInput.value = "";
+          confirmInput.classList.remove("invalid");
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement && wasFullscreen) {
+            wasFullscreen = false;
+            if (player && !fullscreenExitPrompted) {
+              player.pauseVideo();
+            }
+            fullscreenExitPrompted = false;
+          } else if (document.fullscreenElement) {
+            wasFullscreen = true;
+          }
+        });
+
+        document.addEventListener("click", () => {
+          if (isSettingsOpen) {
+            settingsPanel.hidden = true;
+            isSettingsOpen = false;
+          }
+        });
+
+        settingsPanel.addEventListener("click", (event) => {
+          event.stopPropagation();
+        });
+
+        window.addEventListener("beforeunload", (event) => {
+          if (player && player.getPlayerState() === window.YT.PlayerState.PLAYING) {
+            event.preventDefault();
+            event.returnValue = "";
+          }
+        });
       }
 
-      window.focusPlayerShowApiError = showApiError;
+      function displayHome() {
+        home.style.display = "block";
+        playerPage.style.display = "none";
+      }
 
-      function showPlayerPage() {
+      function displayPlayer() {
         home.style.display = "none";
         playerPage.style.display = "block";
       }
 
-      function updatePositionLabel() {
-        if (!playlist.length) {
-          positionLabel.textContent = "No videos loaded";
-          return;
-        }
-        const displayedIndex = Math.min(Math.max(currentIndex + 1, 1), playlist.length);
-        positionLabel.textContent = `Video ${displayedIndex} of ${playlist.length}`;
-      }
-
-      function setPlayerMessage(message, showSkip) {
-        playerMessageText.textContent = message;
-        errorNextBtn.hidden = !showSkip;
-        playerMessage.hidden = false;
-      }
-
-      function clearPlayerMessage() {
-        playerMessage.hidden = true;
-        errorNextBtn.hidden = true;
-      }
-
-      function updatePlayPauseButton(playing) {
-        isPlaying = playing;
-        playIcon.hidden = playing;
-        pauseIcon.hidden = !playing;
-        playPauseBtn.setAttribute("aria-label", playing ? "Pause video" : "Play video");
-        playPauseBtn.title = playing ? "Pause" : "Play";
-      }
-
-      function updateFullscreenButton() {
-        const fullscreen = Boolean(document.fullscreenElement);
-        fullscreenBtn.setAttribute("aria-label", fullscreen ? "Exit fullscreen" : "Enter fullscreen");
-        fullscreenBtn.title = fullscreen ? "Exit fullscreen" : "Fullscreen";
-      }
-
-      function syncPlaybackUi() {
-        if (!player || typeof player.getCurrentTime !== "function") {
-          return;
-        }
-        const current = Number(player.getCurrentTime()) || 0;
-        const duration = Number(player.getDuration()) || 0;
-        timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-        const value = duration > 0 ? Math.min(100, Math.max(0, (current / duration) * 100)) : 0;
-        seekBar.value = String(value);
-        seekBar.style.setProperty("--seek-progress", `${value}%`);
-      }
-
-      function saveProgress() {
-        if (!player || !currentVideoId || typeof player.getCurrentTime !== "function") {
-          return;
-        }
-        const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : null;
-        if (!isPlaying && state !== window.YT?.PlayerState?.PLAYING) {
-          return;
-        }
-        const current = Number(player.getCurrentTime());
-        if (!Number.isFinite(current) || current < 0) {
-          return;
-        }
-        const progress = getProgressMap();
-        progress[currentVideoId] = current;
-        storageSet(PROGRESS_KEY, JSON.stringify(progress));
-      }
-
-      function stopProgressSaving() {
-        if (progressIntervalId !== null) {
-          window.clearInterval(progressIntervalId);
-          progressIntervalId = null;
-        }
-      }
-
-      function startProgressSaving() {
-        // Always clear first so video transitions can never stack intervals.
-        stopProgressSaving();
-        progressIntervalId = window.setInterval(() => {
-          saveProgress();
-          syncPlaybackUi();
-        }, 500);
-      }
-
-      function updateSliderProgress(slider, value) {
-        const min = Number(slider.min) || 0;
-        const max = Number(slider.max) || 100;
-        const range = max - min || 1;
-        const percent = ((Number(value) - min) / range) * 100;
-        slider.style.setProperty("--slider-progress", `${Math.min(100, Math.max(0, percent))}%`);
-      }
-
-      function syncPlaybackRateUi(rateOverride) {
-        const currentRate = normalizePlaybackRate(rateOverride ?? playbackRate ?? getSavedSpeed());
-        playbackRate = currentRate;
-        speedValue.textContent = formatPlaybackRate(currentRate);
-        playbackRateSlider.value = String(currentRate);
-        updateSliderProgress(playbackRateSlider, currentRate);
-        storageSet(SPEED_KEY, String(currentRate));
-      }
-
-      function applyPlaybackRate(requestedRate) {
-        const safeRate = normalizePlaybackRate(requestedRate);
-        playbackRate = safeRate;
-        syncPlaybackRateUi(safeRate);
-
-        if (!player || typeof player.setPlaybackRate !== "function") {
-          return;
-        }
-
-        try {
-          player.setPlaybackRate(safeRate);
-        } catch (error) {
-          // The YouTube API may reject a rate change while the next video is loading.
-        }
-      }
-
-      function applySavedSpeed() {
-        const speed = getSavedSpeed();
-        playbackRate = speed;
-        syncPlaybackRateUi(speed);
-        if (player && typeof player.setPlaybackRate === "function") {
-          try {
-            player.setPlaybackRate(speed);
-          } catch (error) {
-            // The API may briefly reject a rate while a new video is loading.
-          }
-        }
-      }
-
-      function openSettings() {
-        isSettingsOpen = true;
-        settingsPanel.hidden = false;
-        controls.classList.remove("is-hidden");
-        overlay.style.cursor = "pointer";
-        if (controlsHideTimeoutId !== null) {
-          window.clearTimeout(controlsHideTimeoutId);
-          controlsHideTimeoutId = null;
-        }
-      }
-
-      function closeSettings() {
-        isSettingsOpen = false;
-        settingsPanel.hidden = true;
-        if (player && typeof player.getPlayerState === "function") {
-          const state = player.getPlayerState();
-          const playing = isPlaying || state === window.YT?.PlayerState?.PLAYING;
-          if (playing) {
-            controls.classList.add("is-hidden");
-            overlay.style.cursor = "none";
-          }
-        }
-      }
-
-      function seekClamped(time) {
-        if (!player || typeof player.seekTo !== "function") {
-          return;
-        }
-        const duration = Number(player.getDuration()) || 0;
-        const requested = Number(time) || 0;
-        const target = Math.max(0, Math.min(requested, duration));
-        player.seekTo(target, true);
-        syncPlaybackUi();
-      }
-
-      function seekBy(amount) {
-        if (!player || typeof player.getCurrentTime !== "function") {
-          return;
-        }
-        seekClamped((Number(player.getCurrentTime()) || 0) + amount);
-      }
-
-      function togglePlayPause() {
-        if (!player) {
-          return;
-        }
-        const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : null;
-        if (state === window.YT?.PlayerState?.PLAYING || isPlaying) {
-          player.pauseVideo();
-          updatePlayPauseButton(false);
-        } else {
-          clearPlayerMessage();
-          player.playVideo();
-        }
-      }
-
-      function showControls() {
-        if (isSettingsOpen) {
-          controls.classList.remove("is-hidden");
-          overlay.style.cursor = "pointer";
-          return;
-        }
-        controls.classList.remove("is-hidden");
-        overlay.style.cursor = "pointer";
-        if (controlsHideTimeoutId !== null) {
-          window.clearTimeout(controlsHideTimeoutId);
-        }
-        controlsHideTimeoutId = window.setTimeout(() => {
-          controlsHideTimeoutId = null;
-          if (isSettingsOpen) {
-            return;
-          }
-          const state = player && typeof player.getPlayerState === "function" ? player.getPlayerState() : null;
-          const playing = isPlaying || state === window.YT?.PlayerState?.PLAYING;
-          if (playing) {
-            controls.classList.add("is-hidden");
-            overlay.style.cursor = "none";
-          } else {
-            controls.classList.remove("is-hidden");
-            overlay.style.cursor = "pointer";
-          }
-        }, 2000);
-      }
-
-      function showConfirm(action) {
-        pendingAction = action;
-        confirmInput.value = "";
-        confirmInput.classList.remove("invalid");
-        confirmModal.hidden = false;
-        window.setTimeout(() => confirmInput.focus(), 0);
-      }
-
-      function closeConfirm() {
-        const action = pendingAction;
-        pendingAction = null;
-        confirmInput.value = "";
-        confirmInput.classList.remove("invalid");
-        confirmModal.hidden = true;
-
-        // If Escape/native fullscreen already took effect, cancelling tries to restore it.
-        if (action === "fullscreen" && !document.fullscreenElement) {
-          enterFullscreen();
-        }
-      }
-
-      function closeAndReset() {
-        stopProgressSaving();
-        storageRemove(PLAYLIST_KEY);
-        storageRemove(INDEX_KEY);
-        storageRemove(PROGRESS_KEY);
-        window.location.reload();
-      }
-
-      function performConfirmedAction() {
-        const action = pendingAction;
-        pendingAction = null;
-        confirmInput.value = "";
-        confirmModal.hidden = true;
-
-        if (action === "close") {
-          closeAndReset();
-          return;
-        }
-
-        if (action === "fullscreen") {
-          allowFullscreenExit = true;
-          if (document.fullscreenElement && typeof document.exitFullscreen === "function") {
-            document.exitFullscreen().catch(() => {});
-          }
-        }
-      }
-
-      function checkConfirmation() {
-        if (ACCEPTED_TEXTS.includes(confirmInput.value)) {
-          performConfirmedAction();
-          return;
-        }
-        confirmInput.value = "";
-        confirmInput.classList.remove("invalid");
-        // Force a reflow so the animation can replay on consecutive failures.
-        void confirmInput.offsetWidth;
-        confirmInput.classList.add("invalid");
-      }
-
-      function enterFullscreen() {
-        if (document.fullscreenElement) {
-          return;
-        }
-        const request = playerPage.requestFullscreen || playerPage.webkitRequestFullscreen;
-        if (typeof request !== "function") {
-          setPlayerMessage("Fullscreen is not supported by this browser.", false);
-          return;
-        }
-        Promise.resolve(request.call(playerPage, { navigationUI: "hide" }))
-          .catch(() => setPlayerMessage("Fullscreen could not be started. Check your browser permissions.", false));
-      }
-
-      function requestFullscreenToggle() {
-        if (document.fullscreenElement) {
-          showConfirm("fullscreen");
-        } else {
-          enterFullscreen();
-        }
-      }
-
-      function handleFullscreenChange() {
-        const fullscreen = Boolean(document.fullscreenElement);
-        updateFullscreenButton();
-        if (fullscreen) {
-          wasFullscreen = true;
-          fullscreenExitPrompted = false;
-          allowFullscreenExit = false;
-          return;
-        }
-
-        if (wasFullscreen && !allowFullscreenExit && !fullscreenExitPrompted) {
-          fullscreenExitPrompted = true;
-          showConfirm("fullscreen");
-        }
-
-        if (allowFullscreenExit) {
-          wasFullscreen = false;
-          allowFullscreenExit = false;
-          fullscreenExitPrompted = false;
-        }
-        updateFullscreenButton();
-      }
-
-      const adController = {
-        isAdPlaying() {
-          // The embedded YouTube player does not expose a reliable, documented ad-detection API.
-          // Keep the UI hook in place, but leave the state hidden unless a legitimate signal exists.
-          return false;
-        },
-        showSkipButton() {
-          if (this.isAdPlaying()) {
-            skipAdBtn.hidden = false;
-          } else {
-            this.hideSkipButton();
-          }
-        },
-        hideSkipButton() {
-          skipAdBtn.hidden = true;
-        },
-        skipAd() {
-          this.hideSkipButton();
-        }
-      };
-
-      function playNext() {
-        if (!playlist.length) {
-          return;
-        }
-
-        saveProgress();
-        stopProgressSaving();
-        currentIndex += 1;
-        persistIndex();
-
-        if (currentIndex >= playlist.length) {
-          currentVideoId = "";
-          isPlaying = false;
-          updatePlayPauseButton(false);
-          updatePositionLabel();
-          setPlayerMessage("Playlist finished", false);
-          return;
-        }
-
-        const nextVideoId = playlist[currentIndex];
-        if (!validVideoId(nextVideoId)) {
-          setPlayerMessage("This video ID is invalid and cannot be played.", true);
-          return;
-        }
-        currentVideoId = nextVideoId;
-        updatePositionLabel();
-        clearPlayerMessage();
-        updatePlayPauseButton(false);
-        seekBar.value = "0";
-        seekBar.style.setProperty("--seek-progress", "0%");
-        timeLabel.textContent = "00:00:00 / 00:00:00";
-
-        if (!player || typeof player.loadVideoById !== "function") {
-          setPlayerMessage("The player is not ready. Reload the page and try again.", false);
-          return;
-        }
-
-        const resumeTime = getResumeTime(nextVideoId);
-        player.loadVideoById(nextVideoId, resumeTime);
-        // The next video's rate is applied after the load call, as well as in onReady.
-        applySavedSpeed();
-      }
-
-      function playPrevious() {
-        if (!playlist.length || currentIndex <= 0) {
-          return;
-        }
-
-        saveProgress();
-        stopProgressSaving();
-        currentIndex -= 1;
-        persistIndex();
-
-        const previousVideoId = playlist[currentIndex];
-        if (!validVideoId(previousVideoId)) {
-          setPlayerMessage("This video ID is invalid and cannot be played.", true);
-          return;
-        }
-        currentVideoId = previousVideoId;
-        updatePositionLabel();
-        clearPlayerMessage();
-        updatePlayPauseButton(false);
-        seekBar.value = "0";
-        seekBar.style.setProperty("--seek-progress", "0%");
-        timeLabel.textContent = "00:00:00 / 00:00:00";
-
-        if (!player || typeof player.loadVideoById !== "function") {
-          setPlayerMessage("The player is not ready. Reload the page and try again.", false);
-          return;
-        }
-
-        const resumeTime = getResumeTime(previousVideoId);
-        player.loadVideoById(previousVideoId, resumeTime);
-        applySavedSpeed();
-      }
-
-      function handlePlaybackRateChange(event) {
-        const actualRate = Number(event && event.data !== undefined ? event.data : player && typeof player.getPlaybackRate === "function" ? player.getPlaybackRate() : playbackRate);
-        if (!Number.isFinite(actualRate)) {
-          return;
-        }
-        playbackRate = normalizePlaybackRate(actualRate);
-        syncPlaybackRateUi(playbackRate);
-      }
-
-      function handlePlayerReady(event) {
-        currentVideoId = playlist[currentIndex] || "";
-        const resumeTime = getResumeTime(currentVideoId);
-        seekClamped(resumeTime);
-        updatePositionLabel();
-        updateFullscreenButton();
-        syncPlaybackUi();
-        event.target.playVideo();
-        startProgressSaving();
-        applySavedSpeed();
-      }
-
-      function handlePlayerStateChange(event) {
-        const states = window.YT && window.YT.PlayerState;
-        if (!states) {
-          return;
-        }
-
-        adController.hideSkipButton();
-
-        if (event.data === states.ENDED) {
-          saveProgress();
-          playNext();
-          return;
-        }
-
-        if (event.data === states.PLAYING) {
-          clearPlayerMessage();
-          updatePlayPauseButton(true);
-          startProgressSaving();
-          showControls();
-          return;
-        }
-
-        if (event.data === states.PAUSED || event.data === states.CUED) {
-          saveProgress();
-          stopProgressSaving();
-          updatePlayPauseButton(false);
-          showControls();
-          syncPlaybackUi();
-        }
-      }
-
-      function handlePlayerError(event) {
-        stopProgressSaving();
-        updatePlayPauseButton(false);
-        setPlayerMessage(`Playback failed for this video (error ${event.data}).`, currentIndex < playlist.length - 1);
-      }
-
-      function createPlayer() {
-        if (player || currentIndex >= playlist.length) {
-          return;
-        }
-        if (window.focusPlayerApiFailed || !window.YT || typeof window.YT.Player !== "function") {
-          showApiError();
-          return;
-        }
-        const videoId = playlist[currentIndex];
-        if (!validVideoId(videoId)) {
-          setPlayerMessage("This video ID is invalid and cannot be played.", false);
-          return;
-        }
-
-        player = new YT.Player("player", {
-          videoId,
-          playerVars: {
-            controls: 0,
-            rel: 0,
-            modestbranding: 1,
-            playsinline: 1
-          },
-          events: {
-            onReady: handlePlayerReady,
-            onStateChange: handlePlayerStateChange,
-            onError: handlePlayerError
-          }
-        });
-
-        if (typeof player.addEventListener === "function") {
-          player.addEventListener("onPlaybackRateChange", handlePlaybackRateChange);
-        }
-      }
-
-      function bootPlayerWhenReady() {
-        if (currentIndex >= playlist.length) {
-          updatePositionLabel();
-          setPlayerMessage("Playlist finished", false);
-          return;
-        }
-        if (window.focusPlayerApiFailed) {
-          showApiError();
-          return;
-        }
-        if (window.YT && typeof window.YT.Player === "function") {
-          createPlayer();
-        }
-      }
-
-      function startSession(nextPlaylist) {
-        if (!nextPlaylist.length) {
-          window.alert("Please paste at least one valid YouTube link or video ID.");
-          return;
-        }
-        playlist = nextPlaylist;
+      function startPlaylist(videoIds) {
+        playlist = videoIds;
         currentIndex = 0;
-        currentVideoId = playlist[0];
         storageSet(PLAYLIST_KEY, JSON.stringify(playlist));
-        persistIndex();
-        showPlayerPage();
-        setPlayerMessage("Loading your focus session...", false);
-        updatePositionLabel();
-        bootPlayerWhenReady();
+        loadAndPlayVideo();
       }
 
-      function resumeStoredSession() {
-        playlist = getStoredPlaylist();
-        if (!playlist.length) {
-          return;
+      function loadPlaylist() {
+        const saved = storageGet(PLAYLIST_KEY);
+        if (saved) {
+          try {
+            playlist = JSON.parse(saved);
+            currentIndex = parseInt(storageGet(INDEX_KEY) || "0");
+            if (currentIndex >= playlist.length) currentIndex = 0;
+          } catch (error) {}
         }
-
-        // Parse the persisted index explicitly from its string storage value.
-        currentIndex = parseInt(storageGet(INDEX_KEY) || "0", 10);
-        if (!Number.isFinite(currentIndex) || currentIndex < 0) {
-          currentIndex = 0;
-        }
-        currentVideoId = playlist[currentIndex] || "";
-        showPlayerPage();
-        updatePositionLabel();
-        if (currentIndex >= playlist.length) {
-          setPlayerMessage("Playlist finished", false);
-          return;
-        }
-        setPlayerMessage("Loading your focus session...", false);
-        bootPlayerWhenReady();
       }
 
-      startBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        startSession(parseLinks(links.value));
-      });
+      function loadAndPlayVideo() {
+        displayPlayer();
+        const videoId = playlist[currentIndex];
+        currentVideoId = videoId;
+        storageSet(INDEX_KEY, currentIndex.toString());
 
-      playPauseBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        togglePlayPause();
-      });
-
-      skipBackBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        seekBy(-10);
-      });
-
-      skipForwardBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        seekBy(10);
-      });
-
-      fullscreenBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        requestFullscreenToggle();
-      });
-
-      errorNextBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        playNext();
-      });
-
-      overlay.addEventListener("click", () => {
-        togglePlayPause();
-      });
-
-      overlay.addEventListener("mousemove", showControls);
-
-      seekBar.addEventListener("input", () => {
-        const duration = player && typeof player.getDuration === "function" ? Number(player.getDuration()) || 0 : 0;
-        const percentage = Number(seekBar.value) || 0;
-        const previewTime = duration > 0 ? (duration * percentage) / 100 : 0;
-        seekBar.style.setProperty("--seek-progress", `${percentage}%`);
-        seekPreview.textContent = formatTime(previewTime);
-        seekPreview.hidden = false;
-        timeLabel.textContent = `${formatTime(previewTime)} / ${formatTime(duration)}`;
-      });
-
-      seekBar.addEventListener("change", () => {
-        const duration = player && typeof player.getDuration === "function" ? Number(player.getDuration()) || 0 : 0;
-        seekClamped((duration * (Number(seekBar.value) || 0)) / 100);
-        seekPreview.hidden = true;
-      });
-
-      playbackRateSlider.addEventListener("input", () => {
-        const selectedSpeed = normalizePlaybackRate(playbackRateSlider.value);
-        playbackRate = selectedSpeed;
-        syncPlaybackRateUi(selectedSpeed);
-        applyPlaybackRate(selectedSpeed);
-      });
-
-      settingsBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        if (isSettingsOpen) {
-          closeSettings();
+        if (!player) {
+          player = new window.YT.Player("player", {
+            height: "100%",
+            width: "100%",
+            videoId: videoId,
+            playerVars: {
+              autoplay: 1,
+              controls: 0,
+              modestbranding: 1,
+              rel: 0,
+              fs: 1,
+              playsinline: 1,
+              iv_load_policy: 3,
+              disablekb: 1,
+            },
+            events: {
+              onReady: onPlayerReady,
+              onStateChange: onPlayerStateChange,
+              onError: onPlayerError,
+            },
+          });
         } else {
-          openSettings();
+          player.cueVideoById(videoId);
         }
-      });
-
-      skipAdBtn.addEventListener("click", () => {
-        adController.skipAd();
-      });
-
-      closeBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        closeSettings();
-        showConfirm("close");
-      });
-
-      modalCheck.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        checkConfirmation();
-      });
-
-      modalCancel.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        closeConfirm();
-      });
-
-      modalAbort.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        closeConfirm();
-      });
-
-      confirmInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          checkConfirmation();
-          return;
-        }
-        if (event.ctrlKey || event.metaKey) {
-          const key = event.key.toLowerCase();
-          if (["c", "x", "v"].includes(key)) {
-            event.preventDefault();
-          }
-        }
-      });
-
-      ["paste", "dragover", "drop"].forEach((eventName) => {
-        confirmInput.addEventListener(eventName, (event) => {
-          event.preventDefault();
-        });
-      });
-
-      function isTypingElement(element) {
-        return !!(element && (element.tagName === "INPUT" || element.tagName === "TEXTAREA" || element.tagName === "SELECT" || element.isContentEditable));
       }
 
-      window.addEventListener("keydown", (event) => {
-        const key = event.key;
-
-        if (!confirmModal.hidden) {
-          if (key === "F11") {
-            event.preventDefault();
-          }
-          return;
+      function onPlayerReady() {
+        const savedSpeed = storageGet(SPEED_KEY);
+        if (savedSpeed) {
+          playbackRate = parseFloat(savedSpeed);
+          playbackRateSlider.value = playbackRate.toString();
+          speedValue.textContent = playbackRate.toFixed(2) + "x";
+          player.setPlaybackRate(playbackRate);
+          seekBar.style.setProperty("--slider-progress", (playbackRate - 0.25) / (4 - 0.25) * 100 + "%");
         }
 
-        if (playerPage.style.display !== "block") {
-          return;
-        }
-
-        const activeElement = document.activeElement;
-        const isTyping = isTypingElement(activeElement);
-
-        if (key === "Escape") {
-          if (isSettingsOpen) {
-            event.preventDefault();
-            closeSettings();
-          }
-          return;
-        }
-
-        if (event.shiftKey && !isTyping) {
-          if (key === "n" || key === "N") {
-            event.preventDefault();
-            if (currentIndex < playlist.length - 1) {
-              playNext();
-            }
-            return;
-          }
-          if (key === "p" || key === "P") {
-            event.preventDefault();
-            if (currentIndex > 0) {
-              playPrevious();
-            }
-            return;
+        const savedProgress = storageGet(PROGRESS_KEY + "." + currentVideoId);
+        if (savedProgress) {
+          const progress = parseFloat(savedProgress);
+          if (progress > 0 && progress < player.getDuration() - 5) {
+            player.seekTo(progress);
           }
         }
 
-        if (isTyping) {
-          return;
+        player.playVideo();
+        updateProgress();
+      }
+
+      function onPlayerStateChange(event) {
+        const state = event.data;
+        if (state === window.YT.PlayerState.PLAYING) {
+          isPlaying = true;
+          playIcon.hidden = true;
+          pauseIcon.hidden = false;
+          if (progressIntervalId) clearInterval(progressIntervalId);
+          progressIntervalId = setInterval(updateProgress, 100);
+        } else {
+          isPlaying = false;
+          playIcon.hidden = false;
+          pauseIcon.hidden = true;
+          if (progressIntervalId) clearInterval(progressIntervalId);
         }
 
-        const isDigit = /^[0-9]$/.test(key);
-        const recognized = key === " " || key === "Spacebar" || ["k", "K", "j", "J", "l", "L", "ArrowLeft", "ArrowRight", "f", "F", "F11"].includes(key) || isDigit;
-        if (!recognized) {
-          return;
+        if (state === window.YT.PlayerState.ENDED) {
+          if (currentIndex < playlist.length - 1) {
+            currentIndex++;
+            loadAndPlayVideo();
+          } else {
+            clearPlayer();
+          }
         }
+      }
 
-        // This must happen before any custom action to suppress native range/select behavior.
-        event.preventDefault();
+      function onPlayerError(event) {
+        const errorCode = event.data;
+        let message = "";
+        switch (errorCode) {
+          case 2:
+            message = "Invalid video ID.";
+            break;
+          case 5:
+            message = "HTML5 player error.";
+            break;
+          case 100:
+            message = "Video not found or removed.";
+            break;
+          case 101:
+          case 150:
+            message = "Video cannot be played embedded.";
+            break;
+          default:
+            message = "An error occurred while loading the video.";
+        }
+        playerMessageText.textContent = message;
+        playerMessage.hidden = false;
+        errorNextBtn.hidden = playlist.length > 1 && currentIndex < playlist.length - 1 ? false : true;
 
-        if (key === "f" || key === "F" || key === "F11") {
-          requestFullscreenToggle();
-          return;
+        if (errorNextBtn.hidden) {
+          setTimeout(() => {
+            clearPlayer();
+          }, 3000);
         }
-        if (key === " " || key === "Spacebar" || key === "k" || key === "K") {
-          togglePlayPause();
-          return;
+      }
+
+      function updateProgress() {
+        if (!player) return;
+        const current = player.getCurrentTime();
+        const duration = player.getDuration();
+
+        if (duration > 0) {
+          const percent = (current / duration) * 100;
+          seekBar.value = percent.toString();
+          seekBar.style.setProperty("--seek-progress", percent + "%");
+
+          const hours = Math.floor(current / 3600);
+          const minutes = Math.floor((current % 3600) / 60);
+          const seconds = Math.floor(current % 60);
+          const dHours = Math.floor(duration / 3600);
+          const dMinutes = Math.floor((duration % 3600) / 60);
+          const dSeconds = Math.floor(duration % 60);
+
+          timeLabel.textContent = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} / ${String(dHours).padStart(2, "0")}:${String(dMinutes).padStart(2, "0")}:${String(dSeconds).padStart(2, "0")}`;
+          storageSet(PROGRESS_KEY + "." + currentVideoId, current.toString());
         }
-        if (key === "j" || key === "J") {
-          seekBy(-10);
-          return;
+      }
+
+      function clearPlayer() {
+        if (progressIntervalId) clearInterval(progressIntervalId);
+        if (player) {
+          player.stopVideo();
+          player.destroy();
+          player = null;
         }
-        if (key === "l" || key === "L") {
-          seekBy(10);
-          return;
-        }
-        if (key === "ArrowLeft") {
-          seekBy(-5);
-          return;
-        }
-        if (key === "ArrowRight") {
-          seekBy(5);
-          return;
-        }
-        if (isDigit && player && typeof player.getDuration === "function") {
-          const duration = Number(player.getDuration()) || 0;
-          seekClamped(duration * (Number(key) / 10));
+        isPlaying = false;
+        playIcon.hidden = false;
+        pauseIcon.hidden = true;
+        playerMessage.hidden = true;
+        playerMessageText.textContent = "";
+        errorNextBtn.hidden = true;
+        settingsPanel.hidden = true;
+        isSettingsOpen = false;
+        confirmModal.hidden = true;
+        fullscreenExitPrompted = false;
+        displayHome();
+      }
+
+      errorNextBtn.addEventListener("click", () => {
+        if (currentIndex < playlist.length - 1) {
+          currentIndex++;
+          loadAndPlayVideo();
         }
       });
 
-      document.addEventListener("click", (event) => {
-        if (!isSettingsOpen) {
-          return;
-        }
-        const target = event.target;
-        if (target instanceof Node && (settingsPanel.contains(target) || settingsBtn.contains(target))) {
-          return;
-        }
-        closeSettings();
-      });
+      if (window.focusPlayerApiReady) {
+        focusPlayerBoot();
+      }
 
-      document.addEventListener("fullscreenchange", handleFullscreenChange);
-
-      window.addEventListener("beforeunload", () => {
-        saveProgress();
-        stopProgressSaving();
-      });
-
-      window.focusPlayerBoot = () => {
-        if (!window.focusPlayerApiFailed) {
-          bootPlayerWhenReady();
-        }
-      };
-
-      window.setTimeout(() => {
-        if (!window.YT || typeof window.YT.Player !== "function") {
-          showApiError();
-        }
-      }, 5000);
-
-      playbackRate = getSavedSpeed();
-      syncPlaybackRateUi(playbackRate);
-      seekBar.style.setProperty("--seek-progress", "0%");
-      resumeStoredSession();
+      window.focusPlayerBoot = focusPlayerBoot;
     })();
   </script>
 </body>
