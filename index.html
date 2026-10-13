@@ -295,7 +295,7 @@
     .app-close-btn {
       position: absolute;
       right: 16px;
-      bottom: 80px; /* float just above the native timeline/control strip */
+      bottom: 80px;
       z-index: 30;
       display: inline-grid;
       place-items: center;
@@ -327,7 +327,7 @@
 
     .app-close-btn:hover,
     .app-close-btn:active {
-      background: rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .15);
     }
 
     .app-close-btn:active {
@@ -352,13 +352,21 @@
        only likely title/navigation hotspots; the native control strip remains clear. */
     .youtube-shield {
       position: absolute;
-      z-index: 20;
+      z-index: 5;
       display: block;
       background: transparent;
       pointer-events: auto;
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
+    }
+
+    .activity-overlay {
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      background: transparent;
+      pointer-events: none;
     }
 
     .youtube-shield--top {
@@ -585,12 +593,18 @@
   <section id="playerPage" aria-label="Focus Player video">
     <div id="videoShell" class="video-shell">
       <div id="player"></div>
+      <div id="activityOverlay" class="activity-overlay" aria-hidden="true"></div>
       <div id="positionLabel" aria-live="polite">Video 1 of 1</div>
 
       <div id="playerMessage" hidden role="status">
         <span id="playerMessageText"></span>
         <button id="errorNextBtn" class="notice-action" type="button" hidden>Skip to next</button>
       </div>
+
+      <!-- Transparent click shields block only the title region and a bottom-right
+           suggestion/branding hotspot. They do not cover the native control strip. -->
+      <div id="titleShield" class="youtube-shield youtube-shield--top" aria-hidden="true"></div>
+      <div id="endScreenShield" class="youtube-shield youtube-shield--bottom-right" aria-hidden="true"></div>
 
       <button id="closeBtn" class="app-close-btn" type="button" aria-label="Close Focus Player" title="Close Focus Player">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -599,11 +613,6 @@
           <path d="M8 12h9" />
         </svg>
       </button>
-
-      <!-- Transparent click shields block only the title region and a bottom-right
-           suggestion/branding hotspot. They do not cover the native control strip. -->
-      <div id="titleShield" class="youtube-shield youtube-shield--top" aria-hidden="true"></div>
-      <div id="endScreenShield" class="youtube-shield youtube-shield--bottom-right" aria-hidden="true"></div>
 
       <div id="confirmModal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
         <div class="modal-card">
@@ -663,6 +672,7 @@
       const startBtn = document.getElementById("startBtn");
       const playerPage = document.getElementById("playerPage");
       const videoShell = document.getElementById("videoShell");
+      const activityOverlay = document.getElementById("activityOverlay");
       const closeBtn = document.getElementById("closeBtn");
       const positionLabel = document.getElementById("positionLabel");
       const playerMessage = document.getElementById("playerMessage");
@@ -688,9 +698,6 @@
       let pendingAction = null;
       let isPlaying = false;
       let playbackRate = 1;
-      let wasFullscreen = false;
-      let allowFullscreenExit = false;
-      let fullscreenExitPrompted = false;
       let apiErrorShown = false;
       let allowPageUnload = false;
       let navigationGuardInstalled = false;
@@ -938,18 +945,12 @@
       }
 
       function closeConfirm() {
-        const action = pendingAction;
         pendingAction = null;
         confirmInput.value = "";
         confirmInput.classList.remove("invalid");
         confirmModal.hidden = true;
         videoShell.classList.remove("modal-open");
         revealCustomUi();
-
-        // If Escape/native fullscreen already took effect, cancelling tries to restore it.
-        if (action === "fullscreen" && !document.fullscreenElement) {
-          enterFullscreen();
-        }
       }
 
       function closeAndReset() {
@@ -980,13 +981,6 @@
           window.history.back();
           return;
         }
-
-        if (action === "fullscreen") {
-          allowFullscreenExit = true;
-          if (document.fullscreenElement && typeof document.exitFullscreen === "function") {
-            document.exitFullscreen().catch(() => {});
-          }
-        }
       }
 
       function checkConfirmation() {
@@ -1001,43 +995,11 @@
         confirmInput.classList.add("invalid");
       }
 
-      function enterFullscreen() {
-        if (document.fullscreenElement) {
-          return;
-        }
-        // Fullscreen the containing app, not a text/control child, so the iframe,
-        // overlays, Close button, and accountability dialog share one fullscreen box.
-        const target = playerPage;
-        const request = target.requestFullscreen || target.webkitRequestFullscreen;
-        if (typeof request !== "function") {
-          setPlayerMessage("Fullscreen is not supported by this browser.", false);
-          return;
-        }
-        const requestResult = request.call(target, { navigationUI: "hide" });
-        if (requestResult && typeof requestResult.catch === "function") {
-          requestResult.catch(() => setPlayerMessage("Fullscreen could not be started. Check your browser permissions.", false));
-        }
-      }
-
       function handleFullscreenChange() {
-        const fullscreen = Boolean(document.fullscreenElement);
-        if (fullscreen) {
-          wasFullscreen = true;
-          fullscreenExitPrompted = false;
-          allowFullscreenExit = false;
+        if (document.fullscreenElement) {
           revealCustomUi();
-          return;
-        }
-
-        if (wasFullscreen && !allowFullscreenExit && !fullscreenExitPrompted) {
-          fullscreenExitPrompted = true;
-          showConfirm("fullscreen");
-        }
-
-        if (allowFullscreenExit) {
-          wasFullscreen = false;
-          allowFullscreenExit = false;
-          fullscreenExitPrompted = false;
+        } else {
+          pinCustomUiVisible();
         }
       }
 
@@ -1300,9 +1262,18 @@
         showConfirm("close");
       });
 
+      ["titleShield", "endScreenShield"].forEach((shieldId) => {
+        document.getElementById(shieldId).addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        });
+      });
+
       // Pointer activity outside the cross-origin iframe can be observed here.
       // The iframe itself does not expose its internal mouse events to this page;
       // its native control bar retains its own independent visibility behavior.
+      activityOverlay.addEventListener("mousemove", revealCustomUi, { passive: true });
+      window.addEventListener("mousemove", revealCustomUi, { passive: true });
       videoShell.addEventListener("pointermove", revealCustomUi, { passive: true });
       videoShell.addEventListener("pointerenter", revealCustomUi, { passive: true });
       videoShell.addEventListener("pointerdown", revealCustomUi, { passive: true });
