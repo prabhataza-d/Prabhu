@@ -237,16 +237,50 @@
       background: #000;
     }
 
-    #playerPage:fullscreen {
+    /* Fullscreen may be requested for the app shell (our modal/overlays stay
+       inside it) or by YouTube for its own iframe. Size either target explicitly. */
+    #playerPage:fullscreen,
+    .video-shell:fullscreen,
+    #playerPage:-webkit-full-screen,
+    .video-shell:-webkit-full-screen {
+      position: fixed;
+      inset: 0;
       width: 100vw;
       height: 100vh;
+      max-width: none;
+      max-height: none;
+      margin: 0;
+      overflow: visible;
+      background: #000;
+    }
+
+    #playerPage:fullscreen .video-shell,
+    #playerPage:-webkit-full-screen .video-shell {
+      width: 100%;
+      height: 100%;
+    }
+
+    #player:fullscreen,
+    #player iframe:fullscreen,
+    #player:-webkit-full-screen,
+    #player iframe:-webkit-full-screen {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      max-height: none;
+      border: 0;
+      background: #000;
     }
 
     .video-shell {
       position: relative;
       width: 100%;
       height: 100%;
+      overflow: visible;
       background: #000;
+      isolation: isolate;
     }
 
     #player,
@@ -260,57 +294,86 @@
 
     .app-close-btn {
       position: absolute;
-      right: 22px;
-      bottom: 78px; /* stay above YouTube's native control bar */
-      z-index: 15;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 38px;
-      padding: 0 15px;
-      border: 1px solid rgba(255, 255, 255, .16);
-      border-radius: 10px;
-      background: rgba(18, 21, 26, .88);
-      color: var(--text-primary);
-      font-size: .78rem;
-      font-weight: 650;
+      right: 16px;
+      bottom: 80px; /* float just above the native timeline/control strip */
+      z-index: 30;
+      display: inline-grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #fff;
       cursor: pointer;
-      box-shadow: var(--shadow-float);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      transition: background .15s ease, border-color .15s ease, transform .15s ease;
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity .18s ease, background .15s ease, transform .15s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .app-close-btn:hover {
-      background: rgba(36, 40, 48, .96);
-      border-color: rgba(255, 255, 255, .26);
+    .app-close-btn svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .app-close-btn:hover,
+    .app-close-btn:active {
+      background: rgba(255, 255, 255, .14);
     }
 
     .app-close-btn:active {
-      transform: translateY(1px);
+      transform: scale(.96);
     }
 
-    /* Transparent click shields sit above the iframe's end-screen/navigation areas,
-       but below the native control strip. They intentionally intercept clicks only. */
-    .youtube-nav-shield {
+    .video-shell.ui-idle .app-close-btn,
+    .video-shell.modal-open .app-close-btn {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #positionLabel {
+      transition: opacity .18s ease;
+    }
+
+    .video-shell.ui-idle #positionLabel {
+      opacity: 0;
+    }
+
+    /* These transparent shields sit above the cross-origin iframe. They block
+       only likely title/navigation hotspots; the native control strip remains clear. */
+    .youtube-shield {
       position: absolute;
-      z-index: 7;
-      bottom: 52px;
-      height: 44px;
+      z-index: 20;
+      display: block;
       background: transparent;
       pointer-events: auto;
       user-select: none;
       -webkit-user-select: none;
+      touch-action: manipulation;
     }
 
-    #moreVideosShield {
+    .youtube-shield--top {
+      top: 0;
       left: 0;
-      width: min(29vw, 300px);
+      width: min(64vw, 760px);
+      height: 96px;
     }
 
-    #youtubeLinkShield {
+    .youtube-shield--bottom-right {
       right: 0;
-      width: min(12vw, 150px);
+      bottom: 80px; /* the native seek bar/control row stays outside this hitbox */
+      width: min(32vw, 420px);
+      height: min(25vh, 220px);
+      min-height: 100px;
     }
 
     #positionLabel {
@@ -469,18 +532,20 @@
 
     @media (max-width: 680px) {
       .app-close-btn {
-        right: 12px;
+        right: 8px;
         bottom: 70px;
-        min-height: 35px;
-        padding: 0 12px;
       }
 
-      #moreVideosShield {
-        width: 34vw;
+      .youtube-shield--top {
+        width: 82vw;
+        height: 82px;
       }
 
-      #youtubeLinkShield {
-        width: 15vw;
+      .youtube-shield--bottom-right {
+        width: 42vw;
+        height: min(21vh, 140px);
+        min-height: 72px;
+        bottom: 70px;
       }
 
       #positionLabel {
@@ -518,7 +583,7 @@
   <p id="apiError" hidden role="alert"></p>
 
   <section id="playerPage" aria-label="Focus Player video">
-    <div class="video-shell">
+    <div id="videoShell" class="video-shell">
       <div id="player"></div>
       <div id="positionLabel" aria-live="polite">Video 1 of 1</div>
 
@@ -527,12 +592,18 @@
         <button id="errorNextBtn" class="notice-action" type="button" hidden>Skip to next</button>
       </div>
 
-      <button id="closeBtn" class="app-close-btn" type="button" aria-label="Close Focus Player" title="Close Focus Player">Close</button>
+      <button id="closeBtn" class="app-close-btn" type="button" aria-label="Close Focus Player" title="Close Focus Player">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M10 3H5.5A1.5 1.5 0 0 0 4 4.5v15A1.5 1.5 0 0 0 5.5 21H10" />
+          <path d="M13 8l4 4-4 4" />
+          <path d="M8 12h9" />
+        </svg>
+      </button>
 
-      <!-- Click shields block the bottom navigation/branding hotspots inside the
-           cross-origin YouTube iframe. Native controls remain below these shields. -->
-      <div id="moreVideosShield" class="youtube-nav-shield" aria-hidden="true"></div>
-      <div id="youtubeLinkShield" class="youtube-nav-shield" aria-hidden="true"></div>
+      <!-- Transparent click shields block only the title region and a bottom-right
+           suggestion/branding hotspot. They do not cover the native control strip. -->
+      <div id="titleShield" class="youtube-shield youtube-shield--top" aria-hidden="true"></div>
+      <div id="endScreenShield" class="youtube-shield youtube-shield--bottom-right" aria-hidden="true"></div>
 
       <div id="confirmModal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
         <div class="modal-card">
@@ -591,6 +662,7 @@
       const links = document.getElementById("links");
       const startBtn = document.getElementById("startBtn");
       const playerPage = document.getElementById("playerPage");
+      const videoShell = document.getElementById("videoShell");
       const closeBtn = document.getElementById("closeBtn");
       const positionLabel = document.getElementById("positionLabel");
       const playerMessage = document.getElementById("playerMessage");
@@ -612,6 +684,7 @@
       let currentIndex = 0;
       let currentVideoId = "";
       let progressIntervalId = null;
+      let customUiHideTimeoutId = null;
       let pendingAction = null;
       let isPlaying = false;
       let playbackRate = 1;
@@ -769,6 +842,31 @@
         positionLabel.textContent = `Video ${displayedIndex} of ${playlist.length}`;
       }
 
+      function clearCustomUiHideTimer() {
+        if (customUiHideTimeoutId !== null) {
+          window.clearTimeout(customUiHideTimeoutId);
+          customUiHideTimeoutId = null;
+        }
+      }
+
+      function revealCustomUi() {
+        clearCustomUiHideTimer();
+        videoShell.classList.remove("ui-idle");
+        if (confirmModal.hidden && isPlaying) {
+          customUiHideTimeoutId = window.setTimeout(() => {
+            customUiHideTimeoutId = null;
+            if (confirmModal.hidden && isPlaying) {
+              videoShell.classList.add("ui-idle");
+            }
+          }, 2000);
+        }
+      }
+
+      function pinCustomUiVisible() {
+        clearCustomUiHideTimer();
+        videoShell.classList.remove("ui-idle");
+      }
+
       function setPlayerMessage(message, showSkip) {
         playerMessageText.textContent = message;
         errorNextBtn.hidden = !showSkip;
@@ -830,6 +928,9 @@
 
       function showConfirm(action) {
         pendingAction = action;
+        clearCustomUiHideTimer();
+        videoShell.classList.remove("ui-idle");
+        videoShell.classList.add("modal-open");
         confirmInput.value = "";
         confirmInput.classList.remove("invalid");
         confirmModal.hidden = false;
@@ -842,6 +943,8 @@
         confirmInput.value = "";
         confirmInput.classList.remove("invalid");
         confirmModal.hidden = true;
+        videoShell.classList.remove("modal-open");
+        revealCustomUi();
 
         // If Escape/native fullscreen already took effect, cancelling tries to restore it.
         if (action === "fullscreen" && !document.fullscreenElement) {
@@ -863,6 +966,8 @@
         pendingAction = null;
         confirmInput.value = "";
         confirmModal.hidden = true;
+        videoShell.classList.remove("modal-open");
+        clearCustomUiHideTimer();
 
         if (action === "close") {
           closeAndReset();
@@ -900,13 +1005,18 @@
         if (document.fullscreenElement) {
           return;
         }
-        const request = playerPage.requestFullscreen || playerPage.webkitRequestFullscreen;
+        // Fullscreen the containing app, not a text/control child, so the iframe,
+        // overlays, Close button, and accountability dialog share one fullscreen box.
+        const target = playerPage;
+        const request = target.requestFullscreen || target.webkitRequestFullscreen;
         if (typeof request !== "function") {
           setPlayerMessage("Fullscreen is not supported by this browser.", false);
           return;
         }
-        Promise.resolve(request.call(playerPage, { navigationUI: "hide" }))
-          .catch(() => setPlayerMessage("Fullscreen could not be started. Check your browser permissions.", false));
+        const requestResult = request.call(target, { navigationUI: "hide" });
+        if (requestResult && typeof requestResult.catch === "function") {
+          requestResult.catch(() => setPlayerMessage("Fullscreen could not be started. Check your browser permissions.", false));
+        }
       }
 
       function handleFullscreenChange() {
@@ -915,6 +1025,7 @@
           wasFullscreen = true;
           fullscreenExitPrompted = false;
           allowFullscreenExit = false;
+          revealCustomUi();
           return;
         }
 
@@ -1009,6 +1120,16 @@
       }
 
       function handlePlayerReady(event) {
+        // The YouTube iframe is cross-origin, so internal mousemove events are not
+        // visible to the parent. Boundary/focus events can still wake our custom UI.
+        const playerFrame = typeof event.target.getIframe === "function" ? event.target.getIframe() : null;
+        if (playerFrame && !playerFrame.dataset.focusUiBound) {
+          playerFrame.dataset.focusUiBound = "true";
+          playerFrame.addEventListener("pointerenter", revealCustomUi, { passive: true });
+          playerFrame.addEventListener("pointerdown", revealCustomUi, { passive: true });
+          playerFrame.addEventListener("focus", revealCustomUi);
+        }
+
         currentVideoId = playlist[currentIndex] || "";
         const resumeTime = getResumeTime(currentVideoId);
         if (resumeTime > 0 && typeof event.target.seekTo === "function") {
@@ -1027,8 +1148,8 @@
         }
 
         // If a recommendation changes the iframe to a video outside the pasted queue,
-        // immediately restore the queue's current item. Native player navigation cannot
-        // be disabled completely by the IFrame API, so this is a defensive best-effort guard.
+        // immediately restore the queue's current item. Transparent shields also block
+        // known external-link hotspots; this remains defensive rather than a perfect sandbox.
         if (event.data === states.PLAYING && player && typeof player.getVideoData === "function") {
           const activeVideoId = player.getVideoData().video_id;
           if (activeVideoId && activeVideoId !== currentVideoId) {
@@ -1051,6 +1172,7 @@
           clearPlayerMessage();
           isPlaying = true;
           startProgressSaving();
+          revealCustomUi();
           return;
         }
 
@@ -1058,6 +1180,7 @@
           saveProgress();
           stopProgressSaving();
           isPlaying = false;
+          pinCustomUiVisible();
         }
       }
 
@@ -1177,6 +1300,17 @@
         showConfirm("close");
       });
 
+      // Pointer activity outside the cross-origin iframe can be observed here.
+      // The iframe itself does not expose its internal mouse events to this page;
+      // its native control bar retains its own independent visibility behavior.
+      videoShell.addEventListener("pointermove", revealCustomUi, { passive: true });
+      videoShell.addEventListener("pointerenter", revealCustomUi, { passive: true });
+      videoShell.addEventListener("pointerdown", revealCustomUi, { passive: true });
+      closeBtn.addEventListener("focus", pinCustomUiVisible);
+      closeBtn.addEventListener("blur", () => {
+        if (isPlaying) revealCustomUi();
+      });
+
       modalCheck.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -1232,9 +1366,9 @@
       window.addEventListener("keydown", (event) => {
         const key = event.key;
 
-        // Keep app shortcuts from interfering while the accountability dialog is open.
+        // Do not suppress browser fullscreen shortcuts. The page handles only its
+        // own Shift+N/Shift+P playlist shortcuts; YouTube/native shortcuts pass through.
         if (!confirmModal.hidden) {
-          if (key === "F11") event.preventDefault();
           return;
         }
         if (playerPage.style.display !== "block" || !event.shiftKey || isTypingElement(document.activeElement)) {
