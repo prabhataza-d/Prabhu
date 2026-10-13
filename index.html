@@ -81,9 +81,9 @@
     input:focus-visible,
     textarea:focus-visible,
     select:focus-visible {
-      outline: 2px solid rgba(139, 124, 255, 0.85);
+      outline: 2px solid rgba(255, 255, 255, 0.85);
       outline-offset: 3px;
-      box-shadow: 0 0 0 2px rgba(139, 124, 255, 0.2);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
     }
 
     [hidden] {
@@ -159,8 +159,8 @@
     }
 
     textarea:focus {
-      border-color: rgba(139, 124, 255, 0.42);
-      box-shadow: 0 0 0 3px rgba(139, 124, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.34);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
       background: rgba(13, 15, 20, 0.9);
     }
 
@@ -258,242 +258,61 @@
       border: 0;
     }
 
-    #overlay {
+    .app-settings-btn {
       position: absolute;
-      z-index: 2;
+      top: 16px;
+      right: 16px;
+      z-index: 8;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      background: rgba(18, 21, 26, .88);
+      color: var(--text-primary);
+      font-size: .78rem;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: var(--shadow-float);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: background .15s ease, border-color .15s ease;
+    }
+
+    .app-settings-btn:hover {
+      background: rgba(36, 40, 48, .96);
+      border-color: var(--border-strong);
+    }
+
+    .app-settings-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+    }
+
+    .settings-backdrop {
+      position: absolute;
       inset: 0;
-      cursor: pointer;
-    }
-
-    #controls {
-      position: absolute;
-      z-index: 4;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 86px;
-      padding: 14px 16px 12px;
-      background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0) 0%,
-        rgba(9, 10, 15, 0.06) 22%,
-        rgba(9, 10, 15, 0.28) 62%,
-        rgba(9, 10, 15, 0.8) 100%
-      );
-      opacity: 1;
-      pointer-events: auto;
-      transition: opacity .18s ease;
-    }
-
-    #controls.is-hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .controls-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .controls-left,
-    .controls-right {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .controls-right {
-      margin-left: auto;
-    }
-
-    .icon-btn,
-    .close-control,
-    .notice-action,
-    .modal-abort,
-    .settings-close,
-    .skip-ad-btn,
-    .settings-btn {
-      border: 0;
-      cursor: pointer;
-    }
-
-    .icon-btn,
-    .settings-btn {
-      display: inline-grid;
-      flex: 0 0 var(--control-size);
-      place-items: center;
-      width: var(--control-size);
-      height: var(--control-size);
-      padding: 0;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      background: transparent;
-      color: var(--player-control);
-      transition: background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease;
-    }
-
-    .icon-btn:hover,
-    .icon-btn:active,
-    .settings-btn:hover,
-    .settings-btn:active,
-    .close-control:hover,
-    .close-control:active,
-    .settings-close:hover,
-    .settings-close:active {
-      background: rgba(255, 255, 255, .08);
-      color: var(--player-control-hover);
-    }
-
-    .settings-btn {
-      position: relative;
-    }
-
-    .icon {
-      width: 22px;
-      height: 22px;
-      fill: currentColor;
-      pointer-events: none;
-    }
-
-    .icon-skip text {
-      fill: currentColor;
-      font-family: Arial, sans-serif;
-      font-size: 7px;
-      font-weight: 800;
-      pointer-events: none;
-    }
-
-    #timeLabel {
-      flex: 0 0 auto;
-      min-width: 116px;
-      margin: 0 4px;
-      color: rgba(255, 255, 255, .9);
-      font-variant-numeric: tabular-nums;
-      font-size: .78rem;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    #seekBar,
-    #playbackRateSlider {
-      width: 100%;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      border-radius: 999px;
-      background: linear-gradient(
-        to right,
-        var(--player-progress) 0,
-        var(--player-progress) var(--seek-progress, 0%),
-        var(--player-track) var(--seek-progress, 0%),
-        var(--player-track) 100%
-      );
-      outline: none;
-    }
-
-    #seekBar {
-      height: 4px;
-      min-width: 70px;
-      margin: 0;
-      opacity: .9;
-      transition: height .15s ease, opacity .15s ease, box-shadow .15s ease;
-    }
-
-    #seekBar:hover,
-    #seekBar:active {
-      height: 6px;
-      opacity: 1;
-    }
-
-    #seekBar::-webkit-slider-thumb,
-    #playbackRateSlider::-webkit-slider-thumb {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
-      margin-top: -4px;
-      border: 0;
-      border-radius: 50%;
-      background: var(--player-thumb);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, .2);
-    }
-
-    #seekBar::-moz-range-thumb,
-    #playbackRateSlider::-moz-range-thumb {
-      width: 12px;
-      height: 12px;
-      margin-top: -4px;
-      border: 0;
-      border-radius: 50%;
-      background: var(--player-thumb);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, .2);
-    }
-
-    #seekBar::-webkit-slider-runnable-track,
-    #playbackRateSlider::-webkit-slider-runnable-track {
-      height: 4px;
-      border-radius: 999px;
-      background: transparent;
-    }
-
-    #seekBar::-moz-range-track,
-    #playbackRateSlider::-moz-range-track {
-      height: 4px;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
-    }
-
-    .seek-preview {
-      position: absolute;
-      right: 148px;
-      bottom: 72px;
-      padding: 4px 7px;
-      border-radius: 4px;
-      background: rgba(0, 0, 0, .8);
-      color: #fff;
-      font-size: .72rem;
-      font-variant-numeric: tabular-nums;
-      pointer-events: none;
-    }
-
-    .skip-ad-btn {
-      align-self: flex-end;
-      margin-bottom: 6px;
-      padding: 8px 12px;
-      border: 1px solid rgba(139, 124, 255, .18);
-      border-radius: 999px;
-      background: rgba(17, 19, 27, 0.78);
-      color: rgba(255, 255, 255, .92);
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .01em;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
-    }
-
-    .skip-ad-btn[hidden] {
-      display: none !important;
+      z-index: 20;
+      background: rgba(0, 0, 0, .16);
+      cursor: default;
     }
 
     .settings-panel {
       position: absolute;
-      right: 18px;
-      bottom: 72px;
-      z-index: 12;
+      top: 62px;
+      right: 16px;
+      z-index: 21;
       width: min(310px, calc(100vw - 28px));
-      padding: 14px 14px 12px;
-      border: 1px solid var(--border-visible);
+      padding: 16px;
+      border: 1px solid var(--border-strong);
       border-radius: 12px;
-      background: rgba(17, 19, 27, 0.92);
+      background: rgba(18, 21, 26, .97);
       backdrop-filter: blur(20px) saturate(120%);
       -webkit-backdrop-filter: blur(20px) saturate(120%);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, .45), 0 4px 12px rgba(0, 0, 0, .25);
+      box-shadow: var(--shadow-elevated);
       color: var(--text);
     }
 
@@ -566,16 +385,17 @@
     #positionLabel {
       position: absolute;
       z-index: 5;
-      bottom: 76px;
-      left: 18px;
-      padding: 5px 9px;
-      border: 1px solid rgba(255, 255, 255, .14);
-      border-radius: 5px;
-      background: rgba(0, 0, 0, .48);
-      color: #dedede;
+      top: 18px;
+      left: 16px;
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 255, 255, .13);
+      border-radius: 7px;
+      background: rgba(8, 9, 11, .68);
+      color: rgba(242, 243, 245, .82);
       font-size: .72rem;
       font-variant-numeric: tabular-nums;
       pointer-events: none;
+      backdrop-filter: blur(8px);
     }
 
     #playerMessage {
@@ -615,69 +435,8 @@
       background: #e5e5e5;
     }
 
-    .ad-assist {
-      position: absolute;
-      right: 18px;
-      bottom: 108px;
-      z-index: 7;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: min(400px, calc(100vw - 32px));
-      padding: 10px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      background: rgba(17, 19, 27, 0.8);
-      backdrop-filter: blur(16px) saturate(110%);
-      -webkit-backdrop-filter: blur(16px) saturate(110%);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    .ad-assist__message {
-      font-size: 0.76rem;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      color: rgba(255, 255, 255, 0.82);
-      line-height: 1.4;
-    }
-
-    .ad-assist__actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .ad-assist__button {
-      padding: 7px 10px;
-      border: 1px solid rgba(139, 124, 255, 0.26);
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(139, 124, 255, 0.18), rgba(139, 124, 255, 0.08));
-      color: rgba(255, 255, 255, 0.92);
-      font-size: 0.74rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all .15s ease;
-    }
-
-    .ad-assist__button:hover,
-    .ad-assist__button:active {
-      background: linear-gradient(180deg, rgba(139, 124, 255, 0.26), rgba(139, 124, 255, 0.12));
-    }
-
-    .ad-assist__button.secondary {
-      background: rgba(255, 255, 255, 0.04);
-      border-color: rgba(255, 255, 255, 0.12);
-    }
-
-    .ad-assist__button.secondary:hover,
-    .ad-assist__button.secondary:active {
-      background: rgba(255, 255, 255, 0.08);
-    }
-
     #confirmModal {
-      position: fixed;
+      position: absolute;
       z-index: 100;
       inset: 0;
       display: grid;
@@ -778,44 +537,22 @@
     }
 
     @media (max-width: 680px) {
-      .ad-assist {
+      .app-settings-btn {
+        top: 10px;
         right: 10px;
-        bottom: 96px;
-      }
-
-      #controls {
-        gap: 1px;
-        padding-right: 8px;
-        padding-left: 8px;
-      }
-
-      :root {
-        --control-size: 36px;
-      }
-
-      #timeLabel {
-        min-width: 96px;
-        margin: 0 1px;
-        font-size: .68rem;
-      }
-
-      #speedSelect {
-        max-width: 55px;
-        font-size: .7rem;
-      }
-
-      .close-control {
-        padding: 0 7px;
-        font-size: .72rem;
+        min-height: 36px;
+        padding: 0 10px;
       }
 
       #positionLabel {
-        bottom: 70px;
-        left: 9px;
+        top: 12px;
+        left: 10px;
+        font-size: .66rem;
       }
 
-      .seek-preview {
-        right: 105px;
+      .settings-panel {
+        top: 56px;
+        right: 10px;
       }
 
       .form-row {
@@ -849,61 +586,20 @@
   <section id="playerPage" aria-label="Focus Player video">
     <div class="video-shell">
       <div id="player"></div>
-      <div id="overlay" aria-label="Video area. Click to play or pause."></div>
-
       <div id="positionLabel" aria-live="polite">Video 1 of 1</div>
+
       <div id="playerMessage" hidden role="status">
         <span id="playerMessageText"></span>
         <button id="errorNextBtn" class="notice-action" type="button" hidden>Skip to next</button>
       </div>
 
-      <div id="adAssist" class="ad-assist" hidden aria-live="polite">
-        <div id="adAssistMessage" class="ad-assist__message">Ad in progress</div>
-        <div class="ad-assist__actions">
-          <button id="adSkipBtn" class="ad-assist__button" type="button">Skip ad</button>
-          <button id="adReloadBtn" class="ad-assist__button secondary" type="button">Reload</button>
-          <button id="adIgnoreBtn" class="ad-assist__button secondary" type="button">No, I'm good</button>
-        </div>
-      </div>
-
-      <div id="controls" aria-label="Video controls">
-        <button id="skipAdBtn" class="skip-ad-btn" type="button" hidden>Skip Ad <span aria-hidden="true">▶</span></button>
-        <input id="seekBar" type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek through video">
-        <div class="controls-row">
-          <div class="controls-left">
-            <button id="playPauseBtn" class="icon-btn" type="button" aria-label="Play video" title="Play/Pause">
-              <svg id="playIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
-              <svg id="pauseIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M7 5h4v14H7zm6 0h4v14h-4z"></path></svg>
-            </button>
-            <button id="skipBackBtn" class="icon-btn" type="button" aria-label="Seek back 10 seconds" title="Back 10 seconds">
-              <svg class="icon icon-skip" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6l-1.8 1.8A6 6 0 1 0 19 12z"></path>
-                <path d="M20.5 4v6h-6z"></path>
-                <text x="9.8" y="14.2" text-anchor="middle">10</text>
-              </svg>
-            </button>
-            <button id="skipForwardBtn" class="icon-btn" type="button" aria-label="Seek forward 10 seconds" title="Forward 10 seconds">
-              <svg class="icon icon-skip" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6l1.8 1.8A6 6 0 1 1 5 12z"></path>
-                <path d="M3.5 4v6h6z"></path>
-                <text x="14.2" y="14.2" text-anchor="middle">10</text>
-              </svg>
-            </button>
-            <span id="timeLabel" aria-live="off">00:00:00 / 00:00:00</span>
-          </div>
-          <div class="controls-right">
-            <button id="fullscreenBtn" class="icon-btn" type="button" aria-label="Enter fullscreen" title="Fullscreen">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3zm11-5h5v5h-2V6h-3zM4 15h2v3h3v2H4zm14 0h2v5h-5v-2h3z"></path></svg>
-            </button>
-            <button id="settingsBtn" class="settings-btn" type="button" aria-label="Settings" title="Settings">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94a7.52 7.52 0 0 0 .05-.94.7.7 0 0 0-.05-.25l1.94-1.51a.8.8 0 0 0 .19-.98l-1.82-3.15a.8.8 0 0 0-.95-.29l-2.28.91a6.8 6.8 0 0 0-1.63-.94L13.96 3.4a.8.8 0 0 0-.8-.6h-3.63a.8.8 0 0 0-.8.6l-.3 2.38a6.86 6.86 0 0 0-1.62.94l-2.29-.91a.8.8 0 0 0-.95.29L1.67 9.95a.8.8 0 0 0 .19.98l1.94 1.51a.7.7 0 0 0 .05.25.7.7 0 0 0-.05.25l-1.94 1.51a.8.8 0 0 0-.19.98l1.82 3.15a.8.8 0 0 0 .95.29l2.29-.91c.5.39 1.04.7 1.62.94l.3 2.38a.8.8 0 0 0 .8.6h3.63a.8.8 0 0 0 .8-.6l.3-2.38c.58-.24 1.12-.55 1.63-.94l2.28.91a.8.8 0 0 0 .95-.29l1.82-3.15a.8.8 0 0 0-.19-.98l-1.94-1.51ZM12 15.75A3.75 3.75 0 1 1 12 8.25a3.75 3.75 0 0 1 0 7.5Z"></path></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div id="settingsPanel" class="settings-panel" hidden aria-label="Playback settings">
-        <div class="settings-header">Settings</div>
+      <button id="settingsBtn" class="app-settings-btn" type="button" aria-label="Open Focus Player settings" title="Focus Player settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94a7.52 7.52 0 0 0 .05-.94.7.7 0 0 0-.05-.25l1.94-1.51a.8.8 0 0 0 .19-.98l-1.82-3.15a.8.8 0 0 0-.95-.29l-2.28.91a6.8 6.8 0 0 0-1.63-.94L13.96 3.4a.8.8 0 0 0-.8-.6h-3.63a.8.8 0 0 0-.8.6l-.3 2.38a6.86 6.86 0 0 0-1.62.94l-2.29-.91a.8.8 0 0 0-.95.29L1.67 9.95a.8.8 0 0 0 .19.98l1.94 1.51a.7.7 0 0 0 .05.25.7.7 0 0 0-.05.25l-1.94 1.51a.8.8 0 0 0-.19.98l1.82 3.15a.8.8 0 0 0 .95.29l2.29-.91c.5.39 1.04.7 1.62.94l.3 2.38a.8.8 0 0 0 .8.6h3.63a.8.8 0 0 0 .8-.6l.3-2.38c.58-.24 1.12-.55 1.63-.94l2.28.91a.8.8 0 0 0 .95-.29l1.82-3.15a.8.8 0 0 0-.19-.98l-1.94-1.51ZM12 15.75A3.75 3.75 0 1 1 12 8.25a3.75 3.75 0 0 1 0 7.5Z"></path></svg>
+        <span>Settings</span>
+      </button>
+      <div id="settingsBackdrop" class="settings-backdrop" hidden aria-hidden="true"></div>
+      <div id="settingsPanel" class="settings-panel" hidden role="dialog" aria-modal="true" aria-label="Focus Player settings">
+        <div class="settings-header">Focus Player settings</div>
         <div class="settings-row">
           <span>Playback speed</span>
           <strong id="speedValue">1x</strong>
@@ -913,7 +609,7 @@
           <input id="playbackRateSlider" type="range" min="0.25" max="4" step="0.05" value="1" aria-label="Playback speed">
           <span>4x</span>
         </div>
-        <button id="closeBtn" class="settings-close" type="button" aria-label="Close player">Close</button>
+        <button id="closeBtn" class="settings-close" type="button" aria-label="Close Focus Player">Close player</button>
       </div>
 
       <div id="confirmModal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -973,23 +669,12 @@
       const links = document.getElementById("links");
       const startBtn = document.getElementById("startBtn");
       const playerPage = document.getElementById("playerPage");
-      const overlay = document.getElementById("overlay");
-      const controls = document.getElementById("controls");
-      const playPauseBtn = document.getElementById("playPauseBtn");
-      const playIcon = document.getElementById("playIcon");
-      const pauseIcon = document.getElementById("pauseIcon");
-      const skipBackBtn = document.getElementById("skipBackBtn");
-      const skipForwardBtn = document.getElementById("skipForwardBtn");
-      const timeLabel = document.getElementById("timeLabel");
-      const seekBar = document.getElementById("seekBar");
-      const seekPreview = document.getElementById("seekPreview");
       const playbackRateSlider = document.getElementById("playbackRateSlider");
       const speedValue = document.getElementById("speedValue");
       const settingsBtn = document.getElementById("settingsBtn");
       const settingsPanel = document.getElementById("settingsPanel");
-      const fullscreenBtn = document.getElementById("fullscreenBtn");
+      const settingsBackdrop = document.getElementById("settingsBackdrop");
       const closeBtn = document.getElementById("closeBtn");
-      const skipAdBtn = document.getElementById("skipAdBtn");
       const positionLabel = document.getElementById("positionLabel");
       const playerMessage = document.getElementById("playerMessage");
       const playerMessageText = document.getElementById("playerMessageText");
@@ -1000,11 +685,6 @@
       const modalCheck = document.getElementById("modalCheck");
       const modalCancel = document.getElementById("modalCancel");
       const modalAbort = document.getElementById("modalAbort");
-      const adAssist = document.getElementById("adAssist");
-      const adAssistMessage = document.getElementById("adAssistMessage");
-      const adSkipBtn = document.getElementById("adSkipBtn");
-      const adReloadBtn = document.getElementById("adReloadBtn");
-      const adIgnoreBtn = document.getElementById("adIgnoreBtn");
 
       const PLAYBACK_RATE_MIN = 0.25;
       const PLAYBACK_RATE_MAX = 4;
@@ -1024,12 +704,8 @@
       let allowFullscreenExit = false;
       let fullscreenExitPrompted = false;
       let apiErrorShown = false;
-      let adMonitorInterval = null;
-      let adStartTimestamp = 0;
-      let adPromptVisible = false;
-      let adPromptIssued = false;
-      let adAttempted = false;
-      let adExtendedPromptIssued = false;
+      let allowPageUnload = false;
+      let navigationGuardInstalled = false;
 
       function storageGet(key) {
         try {
@@ -1053,103 +729,6 @@
         } catch (error) {
           // Nothing else is needed if storage is unavailable.
         }
-      }
-
-      function hideAdAssist() {
-        adAssist.hidden = true;
-        adPromptVisible = false;
-      }
-
-      function showAdAssist(message, showOptions) {
-        adAssistMessage.textContent = message || "Ad in progress";
-        adAssist.hidden = false;
-        adPromptVisible = true;
-        adSkipBtn.hidden = false;
-        adReloadBtn.hidden = !showOptions;
-        adIgnoreBtn.hidden = !showOptions;
-      }
-
-      function resetAdAssist() {
-        adStartTimestamp = 0;
-        adPromptVisible = false;
-        adPromptIssued = false;
-        adAttempted = false;
-        adExtendedPromptIssued = false;
-        hideAdAssist();
-      }
-
-      function attemptAdSkip() {
-        if (!player || typeof player.getCurrentTime !== "function" || typeof player.seekTo !== "function") {
-          showAdAssist("Unable to skip this ad right now.", true);
-          return;
-        }
-
-        try {
-          const currentTime = Number(player.getCurrentTime()) || 0;
-          const duration = Number(player.getDuration()) || 0;
-          const requestedTime = duration > 0 ? Math.max(currentTime + 15, duration - 1) : currentTime + 15;
-          const targetTime = duration > 0 ? Math.min(requestedTime, duration) : requestedTime;
-          player.seekTo(targetTime, true);
-          if (typeof player.playVideo === "function") {
-            player.playVideo();
-          }
-          adAttempted = true;
-          hideAdAssist();
-        } catch (error) {
-          showAdAssist("Unable to skip this ad right now.", true);
-        }
-      }
-
-      function evaluateAdState() {
-        if (!player || !window.YT || !window.YT.PlayerState || typeof player.getPlayerState !== "function") {
-          return;
-        }
-
-        const state = player.getPlayerState();
-        const currentTime = Number(player.getCurrentTime()) || 0;
-        const duration = Number(player.getDuration()) || 0;
-        const likelyAd = duration > 0
-          && duration <= 90
-          && currentTime >= 0
-          && currentTime < duration
-          && state === window.YT.PlayerState.PLAYING;
-
-        if (!likelyAd) {
-          if (adStartTimestamp || adPromptVisible || adPromptIssued) {
-            resetAdAssist();
-          }
-          return;
-        }
-
-        if (!adStartTimestamp) {
-          adStartTimestamp = Date.now();
-        }
-
-        const elapsed = Date.now() - adStartTimestamp;
-        if (!adPromptIssued) {
-          showAdAssist("Ad in progress", false);
-          adPromptIssued = true;
-        }
-
-        if (elapsed >= 30000 && !adAttempted && !adExtendedPromptIssued) {
-          showAdAssist("Ad still running. You can reload or continue.", true);
-          adExtendedPromptIssued = true;
-        }
-      }
-
-      function startAdMonitor() {
-        if (adMonitorInterval !== null) {
-          window.clearInterval(adMonitorInterval);
-        }
-        adMonitorInterval = window.setInterval(evaluateAdState, 1000);
-      }
-
-      function stopAdMonitor() {
-        if (adMonitorInterval !== null) {
-          window.clearInterval(adMonitorInterval);
-          adMonitorInterval = null;
-        }
-        resetAdAssist();
       }
 
       function validVideoId(id) {
@@ -1295,32 +874,6 @@
         errorNextBtn.hidden = true;
       }
 
-      function updatePlayPauseButton(playing) {
-        isPlaying = playing;
-        playIcon.hidden = playing;
-        pauseIcon.hidden = !playing;
-        playPauseBtn.setAttribute("aria-label", playing ? "Pause video" : "Play video");
-        playPauseBtn.title = playing ? "Pause" : "Play";
-      }
-
-      function updateFullscreenButton() {
-        const fullscreen = Boolean(document.fullscreenElement);
-        fullscreenBtn.setAttribute("aria-label", fullscreen ? "Exit fullscreen" : "Enter fullscreen");
-        fullscreenBtn.title = fullscreen ? "Exit fullscreen" : "Fullscreen";
-      }
-
-      function syncPlaybackUi() {
-        if (!player || typeof player.getCurrentTime !== "function") {
-          return;
-        }
-        const current = Number(player.getCurrentTime()) || 0;
-        const duration = Number(player.getDuration()) || 0;
-        timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-        const value = duration > 0 ? Math.min(100, Math.max(0, (current / duration) * 100)) : 0;
-        seekBar.value = String(value);
-        seekBar.style.setProperty("--seek-progress", `${value}%`);
-      }
-
       function saveProgress() {
         if (!player || !currentVideoId || typeof player.getCurrentTime !== "function") {
           return;
@@ -1348,10 +901,7 @@
       function startProgressSaving() {
         // Always clear first so video transitions can never stack intervals.
         stopProgressSaving();
-        progressIntervalId = window.setInterval(() => {
-          saveProgress();
-          syncPlaybackUi();
-        }, 500);
+        progressIntervalId = window.setInterval(saveProgress, 1000);
       }
 
       function updateSliderProgress(slider, value) {
@@ -1402,89 +952,23 @@
 
       function openSettings() {
         isSettingsOpen = true;
+        settingsBackdrop.hidden = false;
         settingsPanel.hidden = false;
-        controls.classList.remove("is-hidden");
-        overlay.style.cursor = "pointer";
-        if (controlsHideTimeoutId !== null) {
-          window.clearTimeout(controlsHideTimeoutId);
-          controlsHideTimeoutId = null;
-        }
+        settingsBtn.setAttribute("aria-expanded", "true");
+        playbackRateSlider.focus();
       }
 
       function closeSettings() {
         isSettingsOpen = false;
         settingsPanel.hidden = true;
-        if (player && typeof player.getPlayerState === "function") {
-          const state = player.getPlayerState();
-          const playing = isPlaying || state === window.YT?.PlayerState?.PLAYING;
-          if (playing) {
-            controls.classList.add("is-hidden");
-            overlay.style.cursor = "none";
-          }
-        }
-      }
-
-      function seekClamped(time) {
-        if (!player || typeof player.seekTo !== "function") {
-          return;
-        }
-        const duration = Number(player.getDuration()) || 0;
-        const requested = Number(time) || 0;
-        const target = Math.max(0, Math.min(requested, duration));
-        player.seekTo(target, true);
-        syncPlaybackUi();
-      }
-
-      function seekBy(amount) {
-        if (!player || typeof player.getCurrentTime !== "function") {
-          return;
-        }
-        seekClamped((Number(player.getCurrentTime()) || 0) + amount);
-      }
-
-      function togglePlayPause() {
-        if (!player) {
-          return;
-        }
-        const state = typeof player.getPlayerState === "function" ? player.getPlayerState() : null;
-        if (state === window.YT?.PlayerState?.PLAYING || isPlaying) {
-          player.pauseVideo();
-          updatePlayPauseButton(false);
-        } else {
-          clearPlayerMessage();
-          player.playVideo();
-        }
-      }
-
-      function showControls() {
-        if (isSettingsOpen) {
-          controls.classList.remove("is-hidden");
-          overlay.style.cursor = "pointer";
-          return;
-        }
-        controls.classList.remove("is-hidden");
-        overlay.style.cursor = "pointer";
-        if (controlsHideTimeoutId !== null) {
-          window.clearTimeout(controlsHideTimeoutId);
-        }
-        controlsHideTimeoutId = window.setTimeout(() => {
-          controlsHideTimeoutId = null;
-          if (isSettingsOpen) {
-            return;
-          }
-          const state = player && typeof player.getPlayerState === "function" ? player.getPlayerState() : null;
-          const playing = isPlaying || state === window.YT?.PlayerState?.PLAYING;
-          if (playing) {
-            controls.classList.add("is-hidden");
-            overlay.style.cursor = "none";
-          } else {
-            controls.classList.remove("is-hidden");
-            overlay.style.cursor = "pointer";
-          }
-        }, 2000);
+        settingsBackdrop.hidden = true;
+        settingsBtn.setAttribute("aria-expanded", "false");
       }
 
       function showConfirm(action) {
+        if (isSettingsOpen) {
+          closeSettings();
+        }
         pendingAction = action;
         confirmInput.value = "";
         confirmInput.classList.remove("invalid");
@@ -1506,8 +990,8 @@
       }
 
       function closeAndReset() {
+        allowPageUnload = true;
         stopProgressSaving();
-        stopAdMonitor();
         storageRemove(PLAYLIST_KEY);
         storageRemove(INDEX_KEY);
         storageRemove(PROGRESS_KEY);
@@ -1522,6 +1006,13 @@
 
         if (action === "close") {
           closeAndReset();
+          return;
+        }
+
+        if (action === "navigate") {
+          saveProgress();
+          allowPageUnload = true;
+          window.history.back();
           return;
         }
 
@@ -1558,17 +1049,8 @@
           .catch(() => setPlayerMessage("Fullscreen could not be started. Check your browser permissions.", false));
       }
 
-      function requestFullscreenToggle() {
-        if (document.fullscreenElement) {
-          showConfirm("fullscreen");
-        } else {
-          enterFullscreen();
-        }
-      }
-
       function handleFullscreenChange() {
         const fullscreen = Boolean(document.fullscreenElement);
-        updateFullscreenButton();
         if (fullscreen) {
           wasFullscreen = true;
           fullscreenExitPrompted = false;
@@ -1586,29 +1068,7 @@
           allowFullscreenExit = false;
           fullscreenExitPrompted = false;
         }
-        updateFullscreenButton();
       }
-
-      const adController = {
-        isAdPlaying() {
-          // The embedded YouTube player does not expose a reliable, documented ad-detection API.
-          // Keep the UI hook in place, but leave the state hidden unless a legitimate signal exists.
-          return false;
-        },
-        showSkipButton() {
-          if (this.isAdPlaying()) {
-            skipAdBtn.hidden = false;
-          } else {
-            this.hideSkipButton();
-          }
-        },
-        hideSkipButton() {
-          skipAdBtn.hidden = true;
-        },
-        skipAd() {
-          this.hideSkipButton();
-        }
-      };
 
       function playNext() {
         if (!playlist.length) {
@@ -1617,14 +1077,13 @@
 
         saveProgress();
         stopProgressSaving();
+        isPlaying = false;
         currentIndex += 1;
         persistIndex();
 
         if (currentIndex >= playlist.length) {
           currentVideoId = "";
           isPlaying = false;
-          stopAdMonitor();
-          updatePlayPauseButton(false);
           updatePositionLabel();
           setPlayerMessage("Playlist finished", false);
           return;
@@ -1638,10 +1097,6 @@
         currentVideoId = nextVideoId;
         updatePositionLabel();
         clearPlayerMessage();
-        updatePlayPauseButton(false);
-        seekBar.value = "0";
-        seekBar.style.setProperty("--seek-progress", "0%");
-        timeLabel.textContent = "00:00:00 / 00:00:00";
 
         if (!player || typeof player.loadVideoById !== "function") {
           setPlayerMessage("The player is not ready. Reload the page and try again.", false);
@@ -1652,7 +1107,6 @@
         player.loadVideoById(nextVideoId, resumeTime);
         // The next video's rate is applied after the load call, as well as in onReady.
         applySavedSpeed();
-        startAdMonitor();
       }
 
       function playPrevious() {
@@ -1662,6 +1116,7 @@
 
         saveProgress();
         stopProgressSaving();
+        isPlaying = false;
         currentIndex -= 1;
         persistIndex();
 
@@ -1673,10 +1128,6 @@
         currentVideoId = previousVideoId;
         updatePositionLabel();
         clearPlayerMessage();
-        updatePlayPauseButton(false);
-        seekBar.value = "0";
-        seekBar.style.setProperty("--seek-progress", "0%");
-        timeLabel.textContent = "00:00:00 / 00:00:00";
 
         if (!player || typeof player.loadVideoById !== "function") {
           setPlayerMessage("The player is not ready. Reload the page and try again.", false);
@@ -1700,14 +1151,13 @@
       function handlePlayerReady(event) {
         currentVideoId = playlist[currentIndex] || "";
         const resumeTime = getResumeTime(currentVideoId);
-        seekClamped(resumeTime);
+        if (resumeTime > 0 && typeof event.target.seekTo === "function") {
+          event.target.seekTo(resumeTime, true);
+        }
         updatePositionLabel();
-        updateFullscreenButton();
-        syncPlaybackUi();
         event.target.playVideo();
         startProgressSaving();
         applySavedSpeed();
-        startAdMonitor();
       }
 
       function handlePlayerStateChange(event) {
@@ -1716,10 +1166,22 @@
           return;
         }
 
-        adController.hideSkipButton();
+        // If a recommendation changes the iframe to a video outside the pasted queue,
+        // immediately restore the queue's current item. Native player navigation cannot
+        // be disabled completely by the IFrame API, so this is a defensive best-effort guard.
+        if (event.data === states.PLAYING && player && typeof player.getVideoData === "function") {
+          const activeVideoId = player.getVideoData().video_id;
+          if (activeVideoId && activeVideoId !== currentVideoId) {
+            const queuedVideoId = playlist[currentIndex];
+            if (queuedVideoId && validVideoId(queuedVideoId)) {
+              player.loadVideoById(queuedVideoId, getResumeTime(queuedVideoId));
+              applySavedSpeed();
+            }
+            return;
+          }
+        }
 
         if (event.data === states.ENDED) {
-          resetAdAssist();
           saveProgress();
           playNext();
           return;
@@ -1727,26 +1189,21 @@
 
         if (event.data === states.PLAYING) {
           clearPlayerMessage();
-          updatePlayPauseButton(true);
+          isPlaying = true;
           startProgressSaving();
-          showControls();
           return;
         }
 
-        resetAdAssist();
         if (event.data === states.PAUSED || event.data === states.CUED) {
           saveProgress();
           stopProgressSaving();
-          updatePlayPauseButton(false);
-          showControls();
-          syncPlaybackUi();
+          isPlaying = false;
         }
       }
 
       function handlePlayerError(event) {
         stopProgressSaving();
-        resetAdAssist();
-        updatePlayPauseButton(false);
+        isPlaying = false;
         setPlayerMessage(`Playback failed for this video (error ${event.data}).`, currentIndex < playlist.length - 1);
       }
 
@@ -1767,10 +1224,12 @@
         player = new YT.Player("player", {
           videoId,
           playerVars: {
-            controls: 0,
+            controls: 1,
             rel: 0,
-            modestbranding: 1,
-            playsinline: 1
+            playsinline: 1,
+            fs: 1,
+            disablekb: 0
+            // Intentionally omit cc_load_policy: captions are not forced on.
           },
           events: {
             onReady: handlePlayerReady,
@@ -1807,6 +1266,8 @@
         playlist = nextPlaylist;
         currentIndex = 0;
         currentVideoId = playlist[0];
+        allowPageUnload = false;
+        installNavigationGuard();
         storageSet(PLAYLIST_KEY, JSON.stringify(playlist));
         persistIndex();
         showPlayerPage();
@@ -1827,6 +1288,8 @@
           currentIndex = 0;
         }
         currentVideoId = playlist[currentIndex] || "";
+        allowPageUnload = false;
+        installNavigationGuard();
         showPlayerPage();
         updatePositionLabel();
         if (currentIndex >= playlist.length) {
@@ -1842,51 +1305,10 @@
         startSession(parseLinks(links.value));
       });
 
-      playPauseBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        togglePlayPause();
-      });
-
-      skipBackBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        seekBy(-10);
-      });
-
-      skipForwardBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        seekBy(10);
-      });
-
-      fullscreenBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
-        requestFullscreenToggle();
-      });
-
       errorNextBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
+        event.preventDefault();
+        event.stopPropagation();
         playNext();
-      });
-
-      overlay.addEventListener("click", () => {
-        togglePlayPause();
-      });
-
-      overlay.addEventListener("mousemove", showControls);
-
-      seekBar.addEventListener("input", () => {
-        const duration = player && typeof player.getDuration === "function" ? Number(player.getDuration()) || 0 : 0;
-        const percentage = Number(seekBar.value) || 0;
-        const previewTime = duration > 0 ? (duration * percentage) / 100 : 0;
-        seekBar.style.setProperty("--seek-progress", `${percentage}%`);
-        seekPreview.textContent = formatTime(previewTime);
-        seekPreview.hidden = false;
-        timeLabel.textContent = `${formatTime(previewTime)} / ${formatTime(duration)}`;
-      });
-
-      seekBar.addEventListener("change", () => {
-        const duration = player && typeof player.getDuration === "function" ? Number(player.getDuration()) || 0 : 0;
-        seekClamped((duration * (Number(seekBar.value) || 0)) / 100);
-        seekPreview.hidden = true;
       });
 
       playbackRateSlider.addEventListener("input", () => {
@@ -1897,7 +1319,8 @@
       });
 
       settingsBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
+        event.preventDefault();
+        event.stopPropagation();
         if (isSettingsOpen) {
           closeSettings();
         } else {
@@ -1905,47 +1328,48 @@
         }
       });
 
-      skipAdBtn.addEventListener("click", () => {
-        adController.skipAd();
+      // The full-screen scrim sits above the iframe while settings are open. It consumes
+      // the outside click, closes the panel, and cannot accidentally play/pause the video.
+      settingsBackdrop.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeSettings();
       });
 
       closeBtn.addEventListener("click", (event) => {
-        event.currentTarget.blur();
+        event.preventDefault();
+        event.stopPropagation();
         closeSettings();
         showConfirm("close");
       });
 
       modalCheck.addEventListener("click", (event) => {
-        event.currentTarget.blur();
+        event.preventDefault();
+        event.stopPropagation();
         checkConfirmation();
       });
 
       modalCancel.addEventListener("click", (event) => {
-        event.currentTarget.blur();
+        event.preventDefault();
+        event.stopPropagation();
         closeConfirm();
       });
 
       modalAbort.addEventListener("click", (event) => {
-        event.currentTarget.blur();
+        event.preventDefault();
+        event.stopPropagation();
         closeConfirm();
       });
 
-      adSkipBtn.addEventListener("click", attemptAdSkip);
-
-      adReloadBtn.addEventListener("click", () => {
-        if (!currentVideoId || !player || typeof player.loadVideoById !== "function") {
-          showAdAssist("Unable to reload this video right now.", true);
-          return;
-        }
-        try {
-          player.loadVideoById(currentVideoId);
-          hideAdAssist();
-        } catch (error) {
-          showAdAssist("Unable to reload this video right now.", true);
+      // Outside clicks dismiss the custom modal. The fixed backdrop consumes the click,
+      // so it never leaks through to the player iframe beneath it.
+      confirmModal.addEventListener("click", (event) => {
+        if (event.target === confirmModal) {
+          event.preventDefault();
+          event.stopPropagation();
+          closeConfirm();
         }
       });
-
-      adIgnoreBtn.addEventListener("click", hideAdAssist);
 
       confirmInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
@@ -1974,105 +1398,65 @@
       window.addEventListener("keydown", (event) => {
         const key = event.key;
 
+        // Never let app shortcuts or browser-level keyboard handling interact with the
+        // player while the accountability dialog or settings menu is open.
         if (!confirmModal.hidden) {
-          if (key === "F11") {
-            event.preventDefault();
-          }
+          if (key === "F11") event.preventDefault();
           return;
         }
-
-        if (playerPage.style.display !== "block") {
-          return;
-        }
-
-        const activeElement = document.activeElement;
-        const isTyping = isTypingElement(activeElement);
-
-        if (key === "Escape") {
-          if (isSettingsOpen) {
+        if (isSettingsOpen) {
+          if (key === "Escape") {
             event.preventDefault();
             closeSettings();
           }
           return;
         }
-
-        if (event.shiftKey && !isTyping) {
-          if (key === "n" || key === "N") {
-            event.preventDefault();
-            if (currentIndex < playlist.length - 1) {
-              playNext();
-            }
-            return;
-          }
-          if (key === "p" || key === "P") {
-            event.preventDefault();
-            if (currentIndex > 0) {
-              playPrevious();
-            }
-            return;
-          }
-        }
-
-        if (isTyping) {
+        if (playerPage.style.display !== "block" || !event.shiftKey || isTypingElement(document.activeElement)) {
           return;
         }
 
-        const isDigit = /^[0-9]$/.test(key);
-        const recognized = key === " " || key === "Spacebar" || ["k", "K", "j", "J", "l", "L", "ArrowLeft", "ArrowRight", "f", "F", "F11"].includes(key) || isDigit;
-        if (!recognized) {
-          return;
+        // These are the only app-level playback shortcuts. Space/K/J/L/arrows/volume
+        // are deliberately left to YouTube's native controls when the iframe has focus.
+        if (key === "n" || key === "N") {
+          event.preventDefault();
+          if (currentIndex < playlist.length - 1) playNext();
+        } else if (key === "p" || key === "P") {
+          event.preventDefault();
+          if (currentIndex > 0) playPrevious();
         }
-
-        // This must happen before any custom action to suppress native range/select behavior.
-        event.preventDefault();
-
-        if (key === "f" || key === "F" || key === "F11") {
-          requestFullscreenToggle();
-          return;
-        }
-        if (key === " " || key === "Spacebar" || key === "k" || key === "K") {
-          togglePlayPause();
-          return;
-        }
-        if (key === "j" || key === "J") {
-          seekBy(-10);
-          return;
-        }
-        if (key === "l" || key === "L") {
-          seekBy(10);
-          return;
-        }
-        if (key === "ArrowLeft") {
-          seekBy(-5);
-          return;
-        }
-        if (key === "ArrowRight") {
-          seekBy(5);
-          return;
-        }
-        if (isDigit && player && typeof player.getDuration === "function") {
-          const duration = Number(player.getDuration()) || 0;
-          seekClamped(duration * (Number(key) / 10));
-        }
-      });
-
-      document.addEventListener("click", (event) => {
-        if (!isSettingsOpen) {
-          return;
-        }
-        const target = event.target;
-        if (target instanceof Node && (settingsPanel.contains(target) || settingsBtn.contains(target))) {
-          return;
-        }
-        closeSettings();
       });
 
       document.addEventListener("fullscreenchange", handleFullscreenChange);
 
-      window.addEventListener("beforeunload", () => {
+      function installNavigationGuard() {
+        if (navigationGuardInstalled) return;
+        try {
+          window.history.pushState({ focusPlayerGuard: true }, "", window.location.href);
+          navigationGuardInstalled = true;
+        } catch (error) {
+          // Some embedded or file-based contexts restrict history manipulation.
+        }
+      }
+
+      window.addEventListener("popstate", () => {
+        if (allowPageUnload || !playlist.length || playerPage.style.display !== "block") return;
+        try {
+          window.history.pushState({ focusPlayerGuard: true }, "", window.location.href);
+        } catch (error) {
+          // The unload warning below remains the fallback guard.
+        }
+        showConfirm("navigate");
+      });
+
+      window.addEventListener("beforeunload", (event) => {
+        if (allowPageUnload) return;
         saveProgress();
-        stopProgressSaving();
-        stopAdMonitor();
+        if (playlist.length && playerPage.style.display === "block") {
+          // Browsers intentionally forbid a custom sentence-typing modal during page unload.
+          // The browser-native confirmation is the strongest available protection here.
+          event.preventDefault();
+          event.returnValue = "";
+        }
       });
 
       window.focusPlayerBoot = () => {
@@ -2089,7 +1473,6 @@
 
       playbackRate = getSavedSpeed();
       syncPlaybackRateUi(playbackRate);
-      seekBar.style.setProperty("--seek-progress", "0%");
       resumeStoredSession();
     })();
   </script>
